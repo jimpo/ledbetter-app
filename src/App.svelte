@@ -1,11 +1,20 @@
 <script lang="ts">
   import 'bulma/css/bulma.css';
-  export let name: string;
+  import '@fortawesome/fontawesome-free/css/solid.css';
+
+  import Devices from './Devices.svelte';
+  import DeviceSearch from './DeviceSearch.svelte';
+
+  let isSearching = false;
+  function onSearchDevices(): void {
+    isSearching = true;
+  }
 </script>
 
 <main class="section">
-  <div class="content">
-    <h1>Hello {name}!</h1>
-    <p>Visit the <a href="https://svelte.dev/tutorial">Svelte tutorial</a> to learn how to build Svelte apps.</p>
-  </div>
+{#if isSearching}
+  <DeviceSearch/>
+{:else}
+  <Devices onSearch={onSearchDevices}/>
+{/if}
 </main>
