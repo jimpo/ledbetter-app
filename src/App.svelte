@@ -4,18 +4,15 @@
   import '@fortawesome/fontawesome-free/scss/fontawesome.scss';
 
   import Devices from './Devices.svelte';
-  import DeviceSearch from './DeviceSearch.svelte';
 
   let isSearching = false;
   function onSearchDevices(): void {
     isSearching = true;
   }
+
+// TODO: Check Bluetooth availability
 </script>
 
 <main class="section">
-{#if isSearching}
-  <DeviceSearch/>
-{:else}
-  <Devices onSearch={onSearchDevices}/>
-{/if}
+  <Devices/>
 </main>
