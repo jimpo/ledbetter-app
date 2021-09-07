@@ -2,10 +2,10 @@
   "name": "ledbetter-server",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "start": "tsc && node dist/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "tsc && node dist/server.js",
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
@@ -18,9 +18,14 @@
     "koa-bodyparser": "^4.3.0"
   },
   "devDependencies": {
+    "@types/jest": "^27.0.1",
     "@types/koa": "^2.13.4",
     "@types/koa__router": "^8.0.7",
     "@types/node": "^16.7.13",
+    "@types/supertest": "^2.0.11",
+    "jest": "^27.1.0",
+    "supertest": "^6.1.6",
+    "ts-jest": "^27.0.5",
     "typescript": "^4.4.2"
   }
 }
