@@ -2,8 +2,8 @@
   const bluetooth: Bluetooth = navigator.bluetooth;
   const bluetoothAvailable = bluetooth ? bluetooth.getAvailability() : Promise.reject(false);
 
-  const NRF_BLINKY_SERVICE_UUID = '00001523-1212-efde-1523-785feabcd123';
-  const NRF_BLINKY_LED_CHAR = '00001525-1212-efde-1523-785feabcd123';
+  const NRF_LEDBETTER_SERVICE_UUID = '00000000-bbeb-b246-7ebb-262617b70bd4';
+  const NRF_LEDBETTER_PLAYING_CHAR = '00000001-bbeb-b246-7ebb-262617b70bd4';
 
   interface DeviceWithState {
     device: BluetoothDevice;
@@ -21,7 +21,7 @@
 
   async function onSearch(): Promise<void> {
     const bluetoothDevice = await bluetooth.requestDevice({
-      filters: [{services: [NRF_BLINKY_SERVICE_UUID]}],
+      filters: [{services: [NRF_LEDBETTER_SERVICE_UUID]}],
     });
     const device = {
       device: bluetoothDevice,
@@ -40,11 +40,11 @@
     const device = devices[deviceId];
     const gatt = await device.device.gatt.connect();
     updateDevice(device);
-    const service = await gatt.getPrimaryService(NRF_BLINKY_SERVICE_UUID);
+    const service = await gatt.getPrimaryService(NRF_LEDBETTER_SERVICE_UUID);
     if (!service) {
-      throw Error(`no service ${NRF_BLINKY_SERVICE_UUID}`);
+      throw Error(`no service ${NRF_LEDBETTER_SERVICE_UUID}`);
     }
-    const playingChar = await service.getCharacteristic(NRF_BLINKY_LED_CHAR);
+    const playingChar = await service.getCharacteristic(NRF_LEDBETTER_PLAYING_CHAR);
     const playingValue = await playingChar.readValue();
 
     if (playingValue.byteLength !== 1) {
@@ -73,11 +73,11 @@
   async function setPlayState(deviceId: string, value: boolean): Promise<void> {
     const device = devices[deviceId];
     const gatt = device.device.gatt;
-    const service = await gatt.getPrimaryService(NRF_BLINKY_SERVICE_UUID);
+    const service = await gatt.getPrimaryService(NRF_LEDBETTER_SERVICE_UUID);
     if (!service) {
-      throw Error(`no service ${NRF_BLINKY_SERVICE_UUID}`);
+      throw Error(`no service ${NRF_LEDBETTER_SERVICE_UUID}`);
     }
-    const playingChar = await service.getCharacteristic(NRF_BLINKY_LED_CHAR);
+    const playingChar = await service.getCharacteristic(NRF_LEDBETTER_PLAYING_CHAR);
     const charValue = (new Uint8Array([value ? 1 : 0])).buffer;
     await playingChar.writeValue(charValue);
     updateDevice({
