@@ -2,7 +2,7 @@ import Koa, {ExtendableContext} from 'koa';
 import Router from '@koa/router';
 import bodyParser from 'koa-bodyparser';
 
-import {listDrivers, createDriver} from './routes/drivers';
+import {listLEDDrivers, createLEDDriver} from './routes/drivers';
 
 async function checkJsonContentType(ctx: ExtendableContext, next: Koa.Next) {
     /// The === false is because null indicates no request body
@@ -19,8 +19,8 @@ router
     .prefix('/api')
     .use(checkJsonContentType)
     .use(bodyParser())
-    .get('/drivers', listDrivers)
-    .post('/drivers', createDriver);
+    .get('/drivers', listLEDDrivers)
+    .post('/drivers', createLEDDriver);
 
 app
     .use(router.routes())

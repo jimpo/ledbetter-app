@@ -1,12 +1,14 @@
 import Koa, {ExtendableContext} from 'koa';
 import Joi from 'joi';
 
-export async function listDrivers(ctx: ExtendableContext, next: Koa.Next) {
-    ctx.body = [];
+import * as drivers from '../drivers';
+
+export async function listLEDDrivers(ctx: ExtendableContext, next: Koa.Next) {
+    ctx.body = await drivers.list();
     await next();
 }
 
-export async function createDriver(ctx: ExtendableContext, next: Koa.Next) {
+export async function createLEDDriver(ctx: ExtendableContext, next: Koa.Next) {
     const requestSchema = Joi.object({
         name: Joi.string()
             .required(),
