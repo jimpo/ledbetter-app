@@ -8,6 +8,10 @@ export interface LEDDriver {
     ipAddress: string,
 }
 
+export async function create(driver: LEDDriver): Promise<void> {
+    return db('ledDrivers').insert(driver);
+}
+
 export async function list(): Promise<LEDDriver[]> {
     return db<LEDDriver>('ledDrivers')
         .limit(LIST_LIMIT);

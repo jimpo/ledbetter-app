@@ -1,3 +1,4 @@
+import {randomUUID} from 'crypto';
 import Koa, {ExtendableContext} from 'koa';
 import Joi from 'joi';
 
@@ -23,13 +24,15 @@ export async function createLEDDriver(ctx: ExtendableContext, next: Koa.Next) {
         ctx.body = error.details;
         return await next();
     }
-    const name: string = body.name;
-    const ipAddress: string = body.ipAddress;
 
-    ctx.status = 201;
-    ctx.body = {
-        name,
-        ipAddress,
+    const ledDriver = {
+        id: randomUUID(),
+        name: body.name as string,
+        ipAddress: body.ipAddress as string,
     };
+    await drivers.create(ledDriver);
+    ctx.status = 201;
+    ctx.body = ledDriver;
+
     await next();
 }

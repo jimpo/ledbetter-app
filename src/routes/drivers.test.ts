@@ -6,7 +6,9 @@ import {LEDDriver} from '../drivers';
 import {db} from '../db';
 
 
-test('/api/drivers responds with an array', async () => {
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+test('GET /api/drivers responds with an array', async () => {
     const ledDrivers = [
         {
             id: randomUUID(),
@@ -28,4 +30,29 @@ test('/api/drivers responds with an array', async () => {
     ledDrivers.sort((a, b) => a.id.localeCompare(b.id));
     responseLedDrivers.sort((a, b) => a.id.localeCompare(b.id));
     expect(responseLedDrivers).toStrictEqual(ledDrivers);
+});
+
+test('POST /api/drivers creates a new LED driver', async () => {
+    const ledDriverProps = {
+        name: "Living Room",
+        ipAddress: "192.168.1.2",
+    };
+
+    const createResponse = await request(app.callback())
+        .post('/api/drivers')
+        .send(ledDriverProps);
+    console.log(createResponse.body);
+    expect(createResponse.status).toBe(201);
+    const responseLedDriver = createResponse.body as LEDDriver;
+
+    expect(responseLedDriver).toMatchObject({
+        id: expect.stringMatching(UUID_REGEX),
+        ...ledDriverProps,
+    });
+
+    const listResponse = await request(app.callback()).get('/api/drivers');
+    expect(listResponse.status).toBe(200);
+    const responseLedDrivers = listResponse.body as LEDDriver[];
+
+    expect(responseLedDrivers).toStrictEqual([responseLedDriver]);
 });
