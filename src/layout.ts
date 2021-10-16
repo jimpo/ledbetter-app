@@ -1,18 +1,88 @@
 import nearley from 'nearley';
 import grammar from './grammars/layout';
 
-interface LayoutPixelStrip {
-	pixelsPerMeter: number,
-	startXMeters: number,
-	startYMeters: number,
+interface BoundingBox {
+	xMin: number,
+	xMax: number,
+	yMin: number,
+	yMax: number,
+}
+
+class LayoutPixelStrip {
+	pixelsPerMeter: number;
+	startXMeters: number;
+	startYMeters: number;
 	segments: {
 		directionDegrees: number,
 		lengthPixels: number,
-	}[],
+	}[];
+
+	constructor({
+		pixelsPerMeter,
+		startXMeters,
+		startYMeters,
+		segments,
+	}: {
+		pixelsPerMeter: number,
+		startXMeters: number,
+		startYMeters: number,
+		segments: {
+			directionDegrees: number,
+			lengthPixels: number,
+		}[],
+	}) {
+		this.pixelsPerMeter = pixelsPerMeter;
+		this.startXMeters = startXMeters;
+		this.startYMeters = startYMeters;
+		this.segments = segments;
+	}
+
+	boundingBox(): BoundingBox {
+		let x = this.startXMeters;
+		let y = this.startYMeters;
+		const bounds = {
+			xMin: x,
+			xMax: x,
+			yMin: y,
+			yMax: y,
+		};
+		for (const segment of this.segments) {
+			let len = segment.lengthPixels / this.pixelsPerMeter;
+			let radians = 2 * Math.PI * segment.directionDegrees / 360;
+			x += len * Math.cos(radians);
+			y += len * Math.sin(radians);
+			bounds.xMin = Math.min(bounds.xMin, x);
+			bounds.xMax = Math.max(bounds.xMax, x);
+			bounds.yMin = Math.min(bounds.yMin, y);
+			bounds.yMax = Math.max(bounds.yMax, y);
+		}
+		return bounds;
+	}
 }
 
-export interface Layout {
-	pixelStrips: LayoutPixelStrip[],
+class Layout {
+	constructor(public pixelStrips: LayoutPixelStrip[]) {}
+
+	boundingBox(): BoundingBox {
+		if (this.pixelStrips.length === 0) {
+			return {
+				xMin: 0,
+				xMax: 0,
+				yMin: 0,
+				yMax: 0,
+			};
+		}
+
+		const bounds = this.pixelStrips[0].boundingBox();
+		for (let i = 1; i < this.pixelStrips.length; i++) {
+			const stripBounds = this.pixelStrips[i].boundingBox();
+			bounds.xMin = Math.min(bounds.xMin, stripBounds.xMin);
+			bounds.xMax = Math.max(bounds.xMax, stripBounds.xMax);
+			bounds.yMin = Math.min(bounds.yMin, stripBounds.yMin);
+			bounds.yMax = Math.max(bounds.yMax, stripBounds.yMax);
+		}
+		return bounds;
+	}
 }
 
 class LayoutLangInterpreter {
@@ -52,12 +122,12 @@ class LayoutLangInterpreter {
 			this.pixelStrips.push(this.currentPixelStrip.strip);
 		}
 		this.currentPixelStrip = {
-			strip: {
+			strip: new LayoutPixelStrip({
 				pixelsPerMeter: this.pixelsPerMeter,
 				startXMeters,
 				startYMeters,
 				segments: [],
-			},
+			}),
 			degrees: 0,
 		};
 	}
@@ -88,9 +158,7 @@ class LayoutLangInterpreter {
 		if (this.currentPixelStrip !== null) {
 			this.pixelStrips.push(this.currentPixelStrip.strip);
 		}
-		return {
-			pixelStrips: this.pixelStrips,
-		};
+		return new Layout(this.pixelStrips);
 	}
 }
 
