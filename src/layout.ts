@@ -97,6 +97,9 @@ class LayoutLangInterpreter {
 export function parseCode(code: string): Layout {
 	const parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
 	parser.feed(code);
+	if (!code.endsWith("\n")) {
+		parser.feed("\n");
+	}
 	const directives:any[] = parser.results[0];
 
 	const interpreter = new LayoutLangInterpreter();
