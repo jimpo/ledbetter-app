@@ -1,16 +1,16 @@
 import { Knex } from "knex";
 
 
-
 export async function up(knex: Knex): Promise<void> {
-  await knex.schema.createTable('ledDrivers', table => {
+  await knex.schema.createTable('layouts', table => {
     table.uuid('id').primary();
     table.string('name').unique().notNullable();
-    table.string('ipAddress').notNullable();
+    table.text('sourceCode').notNullable();
   });
 }
 
 
 export async function down(knex: Knex): Promise<void> {
-    await knex.schema.dropTable('ledDrivers');
+  await knex.schema.dropTable('layouts');
 }
+
