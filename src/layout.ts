@@ -1,21 +1,24 @@
 import nearley from 'nearley';
 import grammar from './grammars/layout';
 
-interface BoundingBox {
+export interface BoundingBox {
 	xMin: number,
 	xMax: number,
 	yMin: number,
 	yMax: number,
 }
 
-class LayoutPixelStrip {
+interface LayoutPixelSegment {
+	directionDegrees: number,
+	lengthPixels: number,
+}
+
+export class LayoutPixelStrip {
 	pixelsPerMeter: number;
 	startXMeters: number;
 	startYMeters: number;
-	segments: {
-		directionDegrees: number,
-		lengthPixels: number,
-	}[];
+	segments: LayoutPixelSegment[];
+	pixelLocs: {x: number, y: number}[];
 
 	constructor({
 		pixelsPerMeter,
@@ -35,22 +38,18 @@ class LayoutPixelStrip {
 		this.startXMeters = startXMeters;
 		this.startYMeters = startYMeters;
 		this.segments = segments;
+
+		this.pixelLocs = this._computePixelLocs();
 	}
 
 	boundingBox(): BoundingBox {
-		let x = this.startXMeters;
-		let y = this.startYMeters;
 		const bounds = {
-			xMin: x,
-			xMax: x,
-			yMin: y,
-			yMax: y,
+			xMin: this.startXMeters,
+			xMax: this.startXMeters,
+			yMin: this.startYMeters,
+			yMax: this.startYMeters,
 		};
-		for (const segment of this.segments) {
-			let len = segment.lengthPixels / this.pixelsPerMeter;
-			let radians = 2 * Math.PI * segment.directionDegrees / 360;
-			x += len * Math.cos(radians);
-			y += len * Math.sin(radians);
+		for (const {x, y} of this.pixelLocs) {
 			bounds.xMin = Math.min(bounds.xMin, x);
 			bounds.xMax = Math.max(bounds.xMax, x);
 			bounds.yMin = Math.min(bounds.yMin, y);
@@ -58,9 +57,26 @@ class LayoutPixelStrip {
 		}
 		return bounds;
 	}
+
+	_computePixelLocs(): {x: number, y: number}[] {
+		let x = this.startXMeters;
+		let y = this.startYMeters;
+		let pixelLocs = [];
+		for (const segment of this.segments) {
+			let radians = 2 * Math.PI * segment.directionDegrees / 360;
+			const dx = Math.cos(radians) / this.pixelsPerMeter;
+			const dy = Math.sin(radians) / this.pixelsPerMeter;
+			for (let i = 0; i < segment.lengthPixels; i++) {
+				pixelLocs.push({x, y});
+				x += dx;
+				y += dy;
+			}
+		}
+		return pixelLocs;
+	}
 }
 
-class Layout {
+export class Layout {
 	constructor(public pixelStrips: LayoutPixelStrip[]) {}
 
 	boundingBox(): BoundingBox {
@@ -88,7 +104,12 @@ class Layout {
 class LayoutLangInterpreter {
 	pixelsPerMeter:number = 0;
 	pixelStrips:LayoutPixelStrip[] = [];
-	currentPixelStrip:{strip: LayoutPixelStrip, degrees: number} | null = null;
+	currentPixelStrip:{
+		startXMeters: number,
+		startYMeters: number,
+		segments: LayoutPixelSegment[],
+		degrees: number,
+	} | null = null;
 
 	nextDirective(directive: any): void {
 		if (directive.statement == 'set_pixels_per_meter') {
@@ -108,26 +129,19 @@ class LayoutLangInterpreter {
 		if (value <= 0) {
 			throw Error("Must SET PIXELSPERMETER to a non-negative value");
 		}
+		this._finishCurrentStrip();
 		this.pixelsPerMeter = value;
-		if (this.currentPixelStrip !== null) {
-			this.pixelStrips.push(this.currentPixelStrip.strip);
-		}
 	}
 
 	_stripAt({x: startXMeters, y: startYMeters}: {x: number, y: number}) {
 		if (!this.pixelsPerMeter) {
 			throw Error("Must SET PIXELSPERMETER before STRIP AT directive");
 		}
-		if (this.currentPixelStrip !== null) {
-			this.pixelStrips.push(this.currentPixelStrip.strip);
-		}
+		this._finishCurrentStrip();
 		this.currentPixelStrip = {
-			strip: new LayoutPixelStrip({
-				pixelsPerMeter: this.pixelsPerMeter,
-				startXMeters,
-				startYMeters,
-				segments: [],
-			}),
+			startXMeters,
+			startYMeters,
+			segments: [],
 			degrees: 0,
 		};
 	}
@@ -148,16 +162,26 @@ class LayoutLangInterpreter {
 		if (nPixels < 0) {
 			throw Error('SEGMENT expects positive number of pixels');
 		}
-		this.currentPixelStrip.strip.segments.push({
+		this.currentPixelStrip.segments.push({
 			directionDegrees: this.currentPixelStrip.degrees,
 			lengthPixels: nPixels,
 		});
 	}
 
-	finish(): Layout {
+	_finishCurrentStrip() {
 		if (this.currentPixelStrip !== null) {
-			this.pixelStrips.push(this.currentPixelStrip.strip);
+			this.pixelStrips.push(new LayoutPixelStrip({
+				pixelsPerMeter: this.pixelsPerMeter,
+				startXMeters: this.currentPixelStrip.startXMeters,
+				startYMeters: this.currentPixelStrip.startYMeters,
+				segments: this.currentPixelStrip.segments,
+			}));
+			this.currentPixelStrip = null;
 		}
+	}
+
+	finish(): Layout {
+		this._finishCurrentStrip();
 		return new Layout(this.pixelStrips);
 	}
 }

@@ -2,6 +2,7 @@
   import {Router, Route} from "svelte-navigator";
   import 'bulma/css/bulma.css';
   import '@fortawesome/fontawesome-free/scss/solid.scss';
+  import '@fortawesome/fontawesome-free/scss/regular.scss';
   import '@fortawesome/fontawesome-free/scss/fontawesome.scss';
 
   import Devices from './Devices.svelte';
