@@ -1,6 +1,8 @@
 <script lang="ts">
+  import axios from 'axios';
   import Layout from './Layout.svelte';
   import {layout as layoutLib} from 'ledbetter-common';
+  import {API_BASE_URL} from './consts';
 
   const SAMPLE_LAYOUT_CODE =
 `SET PIXELS_PER_METER 60
@@ -23,6 +25,28 @@ SEGMENT 150 pixels
     } catch (err) {
       layout = null;
       layoutCodeError = err;
+    }
+  }
+  let creating = false;
+  let name: string = '';
+  let nameInput: HTMLInputElement;
+
+  async function handleCreate(): Promise<void> {
+    if (layout === null) {
+      return;
+    }
+    if (/^\s*$/.test(name)) {
+      nameInput.focus();
+      return;
+    }
+
+    creating = true;
+
+    try {
+      const response = await axios.post(`${API_BASE_URL}/layouts`, {name, sourceCode: layoutCode});
+      console.log(response);
+    } catch (err) {
+      console.error(err);
     }
   }
 </script>
@@ -59,10 +83,26 @@ SEGMENT 150 pixels
   <div class="block">
     <div class="columns">
       <div class="column is-three-quarters">
-        <input class="input is-large" type="text" placeholder="Layout name...">
+        {#if !creating}
+        <input
+          bind:this={nameInput}
+          bind:value={name}
+          class="input is-large"
+          type="text"
+          placeholder="Layout name..."
+        />
+        {:else}
+        <h1 class="title is-1">{name}</h1>
+        {/if}
       </div>
       <div class="column action-buttons">
-        <button class="button is-large is-primary is-outlined" title="Create">
+        <button
+          class="button is-large is-primary is-outlined"
+          class:is-loading={creating}
+          title="Create"
+          disabled={layout === null ? true : null}
+          on:click|preventDefault={handleCreate}
+        >
           <span class="icon">
             <i class="fas fa-check"></i>
           </span>
@@ -81,6 +121,7 @@ SEGMENT 150 pixels
         class:layout-code-valid={layoutCodeError === null}
         class:layout-code-invalid={layoutCodeError !== null}
         bind:value={layoutCode}
+        disabled={creating ? true : null}
       />
       {#if layoutCodeError !== null}
       <textarea
