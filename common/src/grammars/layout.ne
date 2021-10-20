@@ -17,8 +17,8 @@ const lexer = moo.compile({
 
 main -> (statement):+ {%
   ([statements]) => statements
-    .map(([statement]) => statement)
-    .filter(statement => statement !== null)
+    .map(([statement]: Array<object | null>) => statement)
+    .filter((statement: object | null) => statement !== null)
 %}
 statement ->
     _ %NL {% (_) => null %}

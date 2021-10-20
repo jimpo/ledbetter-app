@@ -1,6 +1,6 @@
 <script lang="ts">
   import Layout from './Layout.svelte';
-  import {parseCode} from './layout';
+  import {layout as layoutLib} from 'ledbetter-common';
 
   const SAMPLE_LAYOUT_CODE =
 `SET PIXELS_PER_METER 60
@@ -18,7 +18,7 @@ SEGMENT 150 pixels
   let layoutCodeError = null;
   $: {
     try {
-      layout = parseCode(layoutCode);
+      layout = layoutLib.parseCode(layoutCode);
       layoutCodeError = null;
     } catch (err) {
       layout = null;

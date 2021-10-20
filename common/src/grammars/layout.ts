@@ -56,8 +56,8 @@ const grammar: Grammar = {
     {"name": "main$ebnf$1", "symbols": ["main$ebnf$1", "main$ebnf$1$subexpression$2"], "postprocess": (d) => d[0].concat([d[1]])},
     {"name": "main", "symbols": ["main$ebnf$1"], "postprocess": 
         ([statements]) => statements
-          .map(([statement]) => statement)
-          .filter(statement => statement !== null)
+          .map(([statement]: Array<object | null>) => statement)
+          .filter((statement: object | null) => statement !== null)
         },
     {"name": "statement", "symbols": ["_", (lexer.has("NL") ? {type: "NL"} : NL)], "postprocess": (_) => null},
     {"name": "statement", "symbols": [{"literal":"SET"}, "__", {"literal":"PIXELS_PER_METER"}, "__", "float", "_", (lexer.has("NL") ? {type: "NL"} : NL)], "postprocess": (t) => {return { statement: "set_pixels_per_meter", value: t[4][0] }}},

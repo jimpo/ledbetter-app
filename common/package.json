@@ -1,0 +1,26 @@
+{
+	"name": "ledbetter-common",
+	"version": "0.0.1",
+	"description": "",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"compile_grammar": "npx nearleyc --out src/grammars/layout.ts src/grammars/layout.ne",
+		"check": "tsc",
+		"test": "jest"
+	},
+	"author": "Jim Posen",
+	"license": "ISC",
+	"dependencies": {
+		"@types/moo": "^0.5.5",
+		"@types/nearley": "^2.11.2",
+		"moo": "^0.5.1",
+		"nearley": "^2.20.1"
+	},
+	"devDependencies": {
+		"@types/jest": "^27.0.2",
+		"jest": "^27.3.1",
+		"ts-jest": "^27.0.7",
+		"typescript": "^4.4.4"
+	}
+}
