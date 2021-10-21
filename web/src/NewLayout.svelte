@@ -1,8 +1,11 @@
 <script lang="ts">
-  import axios from 'axios';
+  import axios, {AxiosError} from 'axios';
   import Layout from './Layout.svelte';
   import {layout as layoutLib} from 'ledbetter-common';
-  import {API_BASE_URL} from './consts';
+  import {useFocus, Link} from 'svelte-navigator';
+
+  const registerFocus = useFocus();
+  export let navigate;
 
   const SAMPLE_LAYOUT_CODE =
 `SET PIXELS_PER_METER 60
@@ -30,11 +33,14 @@ SEGMENT 150 pixels
   let creating = false;
   let name: string = '';
   let nameInput: HTMLInputElement;
+  let bannerError: string | null = 'hi';
 
   async function handleCreate(): Promise<void> {
     if (layout === null) {
       return;
     }
+    bannerError = null;
+
     if (/^\s*$/.test(name)) {
       nameInput.focus();
       return;
@@ -43,11 +49,22 @@ SEGMENT 150 pixels
     creating = true;
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/layouts`, {name, sourceCode: layoutCode});
+      const response = await axios.post('/api/layouts', {name, sourceCode: layoutCode});
       console.log(response);
-    } catch (err) {
-      console.error(err);
+    } catch (untypedErr) {
+      const err = untypedErr as AxiosError;
+      if (err.response.status === 422 &&
+          err.response.data instanceof Object &&
+          err.response.data.hasOwnProperty('error'))
+      {
+        let {error: errMessage} = err.response.data as {error: string};
+        bannerError = errMessage
+      }
+      creating = false;
+      return;
     }
+
+    navigate('/layouts');
   }
 </script>
 
@@ -75,10 +92,17 @@ SEGMENT 150 pixels
 <div class="container">
   <nav class="breadcrumb" aria-label="breadcrumbs">
     <ul>
-      <li><a href="/layouts">Layouts</a></li>
+      <li><Link to="/layouts">Layouts</Link></li>
       <li class="is-active"><a href="/layouts/new" aria-current="page">New Layout</a></li>
     </ul>
   </nav>
+
+  {#if bannerError}
+    <div class="notification is-danger">
+      <button class="delete" on:click|preventDefault={() => bannerError = null}></button>
+      {bannerError}
+    </div>
+  {/if}
 
   <div class="block">
     <div class="columns">
@@ -87,6 +111,7 @@ SEGMENT 150 pixels
         <input
           bind:this={nameInput}
           bind:value={name}
+          use:registerFocus
           class="input is-large"
           type="text"
           placeholder="Layout name..."

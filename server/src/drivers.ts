@@ -9,10 +9,10 @@ export interface LEDDriver {
 }
 
 export async function create(driver: LEDDriver): Promise<void> {
-    return db('ledDrivers').insert(driver);
+    return await db('ledDrivers').insert(driver);
 }
 
 export async function list(): Promise<LEDDriver[]> {
-    return db<LEDDriver>('ledDrivers')
+    return await db<LEDDriver>('ledDrivers')
         .limit(LIST_LIMIT);
 }

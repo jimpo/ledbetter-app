@@ -1,8 +1,7 @@
 <script lang="ts">
-  // import { Canvas, Layer, t } from "svelte-canvas";
-  import type {Layout} from './layout';
+  import type {layout as layoutLib} from 'ledbetter-common';
 
-  export let layout: Layout | null;
+  export let layout: layoutLib.Layout | null;
   export let width: number;
   export let height: number;
 

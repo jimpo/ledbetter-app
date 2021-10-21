@@ -4,9 +4,8 @@ import request from 'supertest';
 import app from '../app';
 import {LEDDriver} from '../drivers';
 import {db} from '../db';
+import {UUID_REGEX} from '../../test/util';
 
-
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 test('GET /api/drivers responds with an array', async () => {
     const ledDrivers = [
@@ -41,7 +40,6 @@ test('POST /api/drivers creates a new LED driver', async () => {
     const createResponse = await request(app.callback())
         .post('/api/drivers')
         .send(ledDriverProps);
-    console.log(createResponse.body);
     expect(createResponse.status).toBe(201);
     const responseLedDriver = createResponse.body as LEDDriver;
 

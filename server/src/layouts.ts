@@ -1,5 +1,5 @@
 import {db} from './db';
-import {layout as lll} from 'ledbetter-common';
+import {UniquenessError} from './errors';
 
 export interface Layout {
   id: string,
@@ -8,5 +8,17 @@ export interface Layout {
 }
 
 export async function create(layout: Layout): Promise<void> {
-	return db('ledDrivers').insert(layout);
+	try {
+		return await db('layouts').insert(layout);
+	} catch (err) {
+		if (err instanceof Object &&
+			err.hasOwnProperty('code') &&
+			err.hasOwnProperty('sqlMessage')) {
+			const {code, sqlMessage} = err as {code: string, sqlMessage: string};
+			if (code == 'ER_DUP_ENTRY' && sqlMessage.match(/layouts\.layouts_name_unique/)) {
+				throw new UniquenessError('name', `Layout already exists with name: ${layout.name}`);
+			}
+		}
+		throw err;
+	}
 }

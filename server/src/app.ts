@@ -1,10 +1,13 @@
-import Koa, {ExtendableContext} from 'koa';
+import Koa from 'koa';
 import Router from '@koa/router';
 import bodyParser from 'koa-bodyparser';
+import send from 'koa-send';
+import {isHttpError} from 'http-errors';
 
 import {listLEDDrivers, createLEDDriver} from './routes/drivers';
+import {createLayout} from './routes/layouts';
 
-async function checkJsonContentType(ctx: ExtendableContext, next: Koa.Next) {
+async function checkJsonContentType(ctx: Koa.Context, next: Koa.Next) {
     /// The === false is because null indicates no request body
     if (ctx.is('application/json') === false) {
         ctx.throw(415, 'API only accepts JSON requests');
@@ -12,19 +15,42 @@ async function checkJsonContentType(ctx: ExtendableContext, next: Koa.Next) {
     await next();
 }
 
-const app = new Koa();
-const router = new Router();
+async function serveStaticFiles(ctx: Koa.Context, next: Koa.Next) {
+	if (!ctx.path.startsWith('/api') &&
+		(ctx.method === 'HEAD' || ctx.method === 'GET')) {
+		try {
+			const done = await send(ctx, ctx.path, { root: 'public' });
+			if (done) {
+				return;
+			}
+		} catch (err) {
+			if (isHttpError(err) && err.status !== 404) {
+				throw err;
+			}
+		}
 
-router
-    .prefix('/api')
+		if (ctx.accepts('html')) {
+			// Since it's a single page app, serve index for all paths accepting HTML
+			const done = await send(ctx, 'public/index.html');
+			if (done) {
+				return;
+			}
+		}
+	}
+
+	await next();
+}
+
+const apiRouter = new Router({prefix: '/api'})
     .use(checkJsonContentType)
     .use(bodyParser())
     .get('/drivers', listLEDDrivers)
-    .post('/drivers', createLEDDriver);
+    .post('/drivers', createLEDDriver)
+    .post('/layouts', createLayout);
 
-app
-    .use(router.routes())
-    .use(router.allowedMethods());
+const app = new Koa()
+    .use(apiRouter.routes())
+    .use(apiRouter.allowedMethods())
+	.use(serveStaticFiles);
 
 export default app;
-
