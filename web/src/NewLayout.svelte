@@ -1,14 +1,14 @@
 <script lang="ts">
-  import axios, {AxiosError} from 'axios';
-  import Layout from './Layout.svelte';
-  import {layout as layoutLib} from 'ledbetter-common';
-  import {useFocus, Link} from 'svelte-navigator';
+	import axios, {AxiosError} from 'axios';
+	import Layout from './Layout.svelte';
+	import {pixelLayout, PixelLayout} from 'ledbetter-common';
+	import {useFocus, Link} from 'svelte-navigator';
 
-  const registerFocus = useFocus();
-  export let navigate;
+	const registerFocus = useFocus();
+	export let navigate;
 
-  const SAMPLE_LAYOUT_CODE =
-`SET PIXELS_PER_METER 60
+	const SAMPLE_LAYOUT_CODE =
+		`SET PIXELS_PER_METER 60
 
 STRIP AT -1m, 0m
 TURN 90 degrees
@@ -18,142 +18,142 @@ STRIP AT 1m, 0m
 TURN 90 degrees
 SEGMENT 150 pixels
 `;
-  let layoutCode = SAMPLE_LAYOUT_CODE;
-  let layout = null;
-  let layoutCodeError = null;
-  $: {
-    try {
-      layout = layoutLib.parseCode(layoutCode);
-      layoutCodeError = null;
-    } catch (err) {
-      layout = null;
-      layoutCodeError = err;
-    }
-  }
-  let creating = false;
-  let name: string = '';
-  let nameInput: HTMLInputElement;
-  let bannerError: string | null = null;
+	let layoutCode = SAMPLE_LAYOUT_CODE;
+	let layout: PixelLayout | null  = null;
+	let layoutCodeError: Error | null;
+	$: {
+		try {
+			layout = pixelLayout.parseCode(layoutCode);
+			layoutCodeError = null;
+		} catch (err) {
+			layout = null;
+			layoutCodeError = err;
+		}
+	}
+	let creating = false;
+	let name: string = '';
+	let nameInput: HTMLInputElement;
+	let bannerError: string | null = null;
 
-  async function handleCreate(): Promise<void> {
-    if (layout === null) {
-      return;
-    }
-    bannerError = null;
+	async function handleCreate(): Promise<void> {
+		if (layout === null) {
+			return;
+		}
+		bannerError = null;
 
-    if (/^\s*$/.test(name)) {
-      nameInput.focus();
-      return;
-    }
+		if (/^\s*$/.test(name)) {
+			nameInput.focus();
+			return;
+		}
 
-    creating = true;
+		creating = true;
 
-    try {
-      const response = await axios.post('/api/layouts', {name, sourceCode: layoutCode});
-    } catch (untypedErr) {
-      const err = untypedErr as AxiosError;
-      if (err.response.status === 422 &&
-          err.response.data instanceof Object &&
-          err.response.data.hasOwnProperty('error'))
-      {
-        let {error: errMessage} = err.response.data as {error: string};
-        bannerError = errMessage
-      }
-      creating = false;
-      return;
-    }
+		try {
+			await axios.post('/api/layouts', {name, sourceCode: layoutCode});
+		} catch (untypedErr) {
+			const err = untypedErr as AxiosError;
+			if (err.response.status === 422 &&
+				err.response.data instanceof Object &&
+				err.response.data.hasOwnProperty('error'))
+			{
+				let {error: errMessage} = err.response.data as {error: string};
+				bannerError = errMessage
+			}
+			creating = false;
+			return;
+		}
 
-    navigate('/layouts');
-  }
+		navigate('/layouts');
+	}
 </script>
 
 <style>
-  .layout-code-edit {
-    font-family: monospace;
-  }
-  .layout-code-edit.layout-code-valid {
-    height: 640px;
-  }
-  .layout-code-edit.layout-code-invalid {
-    height: 320px;
-  }
-  .layout-code-error {
-    height: 320px;
-    font-family: monospace;
-    background-color: #f5f5f5;
-  }
+	.layout-code-edit {
+		font-family: monospace;
+	}
+	.layout-code-edit.layout-code-valid {
+		height: 640px;
+	}
+	.layout-code-edit.layout-code-invalid {
+		height: 320px;
+	}
+	.layout-code-error {
+		height: 320px;
+		font-family: monospace;
+		background-color: #f5f5f5;
+	}
 
-  .action-buttons {
-    text-align: right;
-  }
+	.action-buttons {
+		text-align: right;
+	}
 </style>
 
 <div class="container">
-  <nav class="breadcrumb" aria-label="breadcrumbs">
-    <ul>
-      <li><Link to="/layouts">Layouts</Link></li>
-      <li class="is-active"><a href="/layouts/new" aria-current="page">New Layout</a></li>
-    </ul>
-  </nav>
+	<nav class="breadcrumb" aria-label="breadcrumbs">
+		<ul>
+			<li><Link to="/layouts">Layouts</Link></li>
+			<li class="is-active"><a href="/layouts/new" aria-current="page">New Layout</a></li>
+		</ul>
+	</nav>
 
-  {#if bannerError}
-    <div class="notification is-danger">
-      <button class="delete" on:click|preventDefault={() => bannerError = null}></button>
-      {bannerError}
-    </div>
-  {/if}
+	{#if bannerError}
+		<div class="notification is-danger">
+			<button class="delete" on:click|preventDefault={() => bannerError = null}></button>
+			{bannerError}
+		</div>
+	{/if}
 
-  <div class="block">
-    <div class="columns">
-      <div class="column is-three-quarters">
-        {#if !creating}
-        <input
-          bind:this={nameInput}
-          bind:value={name}
-          use:registerFocus
-          class="input is-large"
-          type="text"
-          placeholder="Layout name..."
-        />
-        {:else}
-        <h1 class="title is-1">{name}</h1>
-        {/if}
-      </div>
-      <div class="column action-buttons">
-        <button
-          class="button is-large is-primary is-outlined"
-          class:is-loading={creating}
-          title="Create"
-          disabled={layout === null ? true : null}
-          on:click|preventDefault={handleCreate}
-        >
+	<div class="block">
+		<div class="columns">
+			<div class="column is-three-quarters">
+				{#if !creating}
+					<input
+							bind:this={nameInput}
+							bind:value={name}
+							use:registerFocus
+							class="input is-large"
+							type="text"
+							placeholder="Layout name..."
+					/>
+				{:else}
+					<h1 class="title is-1">{name}</h1>
+				{/if}
+			</div>
+			<div class="column action-buttons">
+				<button
+						class="button is-large is-primary is-outlined"
+						class:is-loading={creating}
+						title="Create"
+						disabled={layout === null ? true : null}
+						on:click|preventDefault={handleCreate}
+				>
           <span class="icon">
             <i class="fas fa-check"></i>
           </span>
-        </button>
-      </div>
-    </div>
-  </div>
+				</button>
+			</div>
+		</div>
+	</div>
 
-  <div class="columns">
-    <div class="column">
-      <Layout width={640} height={640} layout={layout} />
-    </div>
-    <div class="column">
+	<div class="columns">
+		<div class="column">
+			<Layout width={640} height={640} layout={layout} />
+		</div>
+		<div class="column">
       <textarea
-        class="textarea has-fixed-size layout-code-edit"
-        class:layout-code-valid={layoutCodeError === null}
-        class:layout-code-invalid={layoutCodeError !== null}
-        bind:value={layoutCode}
-        disabled={creating ? true : null}
-      />
-      {#if layoutCodeError !== null}
+				class="textarea has-fixed-size layout-code-edit"
+				class:layout-code-valid={layoutCodeError === null}
+				class:layout-code-invalid={layoutCodeError !== null}
+				bind:value={layoutCode}
+				disabled={creating ? true : null}
+			/>
+			{#if layoutCodeError !== null}
       <textarea
-        class="textarea layout-code-error has-fixed-size is-danger"
-        readonly
-        value={layoutCodeError.message}
-      />
-      {/if}
-    </div>
-  </div>
+				class="textarea layout-code-error has-fixed-size is-danger"
+				readonly>
+			  {layoutCodeError.message}
+			</textarea>
+			{/if}
+		</div>
+	</div>
 </div>

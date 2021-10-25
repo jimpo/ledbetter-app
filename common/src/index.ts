@@ -1,1 +1,3 @@
-export * as layout from './layout';
+export * as pixelLayout from './pixelLayout';
+export {PixelLayout} from './pixelLayout';
+export {Layout} from './layout';

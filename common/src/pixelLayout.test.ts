@@ -1,4 +1,4 @@
-import {parseCode, Layout, LayoutPixelStrip} from './layout';
+import {parseCode, PixelLayout, PixelLayoutStrip} from './pixelLayout';
 
 
 test('parseCode', () => {
@@ -9,8 +9,8 @@ TURN 30 degrees
 SEGMENT 300 pixels
 `;
 	const results = parseCode(program);
-	const expectedLayout = new Layout([
-		new LayoutPixelStrip({
+	const expectedLayout = new PixelLayout([
+		new PixelLayoutStrip({
 			pixelsPerMeter: 60,
 			startXMeters: 10,
 			startYMeters: -10,
@@ -32,8 +32,8 @@ STRIP AT 10m, -10m
 TURN 30 degrees
 SEGMENT 300 pixels`;
 	const results = parseCode(program);
-	const expectedLayout = new Layout([
-		new LayoutPixelStrip({
+	const expectedLayout = new PixelLayout([
+		new PixelLayoutStrip({
 			pixelsPerMeter: 60,
 			startXMeters: 10,
 			startYMeters: -10,
@@ -55,7 +55,7 @@ SET PIXELS_PER_METER`;
 });
 
 test('pixelLocs is computed correcty', () => {
-	const strip = new LayoutPixelStrip({
+	const strip = new PixelLayoutStrip({
 		pixelsPerMeter: 60,
 		startXMeters: 0,
 		startYMeters: 0,

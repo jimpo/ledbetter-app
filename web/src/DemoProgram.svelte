@@ -1,9 +1,9 @@
 <script lang="ts">
   import axios from 'axios';
-  import Layout from './Layout.svelte';
-  import {layout as layoutLib} from 'ledbetter-common';
+  import LayoutComponent from './Layout.svelte';
+	import {pixelLayout as layoutLib, Layout, PixelLayout} from 'ledbetter-common';
 
-	let layouts = [];
+	let layouts: Layout[] = [];
 	let layoutId = '';
 
 	async function loadLayouts(): Promise<void> {
@@ -11,7 +11,7 @@
 		layouts = response.data;
 	}
 
-	let pixelLayout;
+	let pixelLayout: PixelLayout | null;
 	$: {
 		const layout = layouts.find((layout) => layout.id === layoutId);
 		if (layout) {
@@ -26,7 +26,7 @@
 	<div class="columns">
     <div class="column">
 			{#if pixelLayout !== null}
-			<Layout width={640} height={640} layout={pixelLayout} />
+			<LayoutComponent width={640} height={640} layout={pixelLayout} />
 			{/if}
     </div>
     <div class="column">
@@ -36,7 +36,7 @@
 					<option value="">Select layout</option>
 				</select>
 			</div>
-		  {:then}
+		  {:then _}
 			<div class="select">
 				<select bind:value={layoutId}>
 					<option value="">Select layout</option>

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type {layout as layoutLib} from 'ledbetter-common';
+  import type {PixelLayout} from 'ledbetter-common';
 
-  export let layout: layoutLib.Layout | null;
+  export let layout: PixelLayout | null;
   export let width: number;
   export let height: number;
 
