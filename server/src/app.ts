@@ -5,7 +5,7 @@ import send from 'koa-send';
 import {isHttpError} from 'http-errors';
 
 import {listLEDDrivers, createLEDDriver} from './routes/drivers';
-import {createLayout} from './routes/layouts';
+import {listLayouts, createLayout} from './routes/layouts';
 
 async function checkJsonContentType(ctx: Koa.Context, next: Koa.Next) {
     /// The === false is because null indicates no request body
@@ -46,6 +46,7 @@ const apiRouter = new Router({prefix: '/api'})
     .use(bodyParser())
     .get('/drivers', listLEDDrivers)
     .post('/drivers', createLEDDriver)
+    .get('/layouts', listLayouts)
     .post('/layouts', createLayout);
 
 const app = new Koa()

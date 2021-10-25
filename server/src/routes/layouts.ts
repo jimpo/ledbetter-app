@@ -1,11 +1,16 @@
 import { randomUUID } from 'crypto';
-import Koa, { ExtendableContext } from 'koa';
+import Koa, {Context} from 'koa';
 import Joi from 'joi';
 
 import * as layouts from '../layouts';
 import {UniquenessError} from '../errors';
 
-export async function createLayout(ctx: ExtendableContext, next: Koa.Next) {
+export async function listLayouts(ctx: Context, next: Koa.Next) {
+	ctx.body = await layouts.list();
+	await next();
+}
+
+export async function createLayout(ctx: Context, next: Koa.Next) {
 	const requestSchema = Joi.object({
 		name: Joi.string()
 			.required(),

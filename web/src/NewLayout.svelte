@@ -33,7 +33,7 @@ SEGMENT 150 pixels
   let creating = false;
   let name: string = '';
   let nameInput: HTMLInputElement;
-  let bannerError: string | null = 'hi';
+  let bannerError: string | null = null;
 
   async function handleCreate(): Promise<void> {
     if (layout === null) {
@@ -50,7 +50,6 @@ SEGMENT 150 pixels
 
     try {
       const response = await axios.post('/api/layouts', {name, sourceCode: layoutCode});
-      console.log(response);
     } catch (untypedErr) {
       const err = untypedErr as AxiosError;
       if (err.response.status === 422 &&

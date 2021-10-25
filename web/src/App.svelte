@@ -5,13 +5,17 @@
 	import '@fortawesome/fontawesome-free/scss/regular.scss';
 	import '@fortawesome/fontawesome-free/scss/fontawesome.scss';
 
+	import DemoProgram from './DemoProgram.svelte';
 	import Devices from './Devices.svelte';
 	import Drivers from './Drivers.svelte';
+	import Landing from './Landing.svelte';
 	import NewLayout from './NewLayout.svelte';
 </script>
 
 <main class="section">
 	<Router>
+		<Route path="/" component={Landing}/>
+		<Route path="demo" component={DemoProgram}/>
 		<Route path="devices/" component={Devices}/>
 		<Route path="drivers/" component={Drivers}/>
 		<Route path="layouts/new" component={NewLayout}/>

@@ -1,10 +1,17 @@
 import {db} from './db';
 import {UniquenessError} from './errors';
 
+const LIST_LIMIT: number = 10;
+
 export interface Layout {
   id: string,
   name: string,
   sourceCode: string,
+}
+
+export async function list(): Promise<Layout[]> {
+	return await db<Layout>('layouts')
+		.limit(LIST_LIMIT);
 }
 
 export async function create(layout: Layout): Promise<void> {
