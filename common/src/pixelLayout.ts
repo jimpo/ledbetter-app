@@ -42,6 +42,10 @@ export class PixelLayoutStrip {
 		this.pixelLocs = this._computePixelLocs();
 	}
 
+	get length(): number {
+		return this.pixelLocs.length;
+	}
+
 	boundingBox(): BoundingBox {
 		const bounds = {
 			xMin: this.startXMeters,

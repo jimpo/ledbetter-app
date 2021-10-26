@@ -1,7 +1,7 @@
 import request from 'supertest';
 
 import app from '../app';
-import {Layout} from '../layouts';
+import {Layout} from 'ledbetter-common';
 import {UUID_REGEX} from '../../test/util';
 
 
@@ -32,11 +32,11 @@ SEGMENT 150 pixels
         ...layoutProps,
     });
 
-    // const listResponse = await request(app.callback()).get('/api/layouts');
-    // expect(listResponse.status).toBe(200);
-    // const responseLayouts = listResponse.body as Layout[];
+    const listResponse = await request(app.callback()).get('/api/layouts');
+    expect(listResponse.status).toBe(200);
+    const responseLayouts = listResponse.body as Layout[];
 
-    // expect(responseLayouts).toStrictEqual([responseLayout]);
+    expect(responseLayouts).toStrictEqual([responseLayout]);
 });
 
 test.only('POST /api/layouts returns error on duplicate name', async () => {

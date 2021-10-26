@@ -1,4 +1,4 @@
-import Koa from 'koa';
+import Koa, {ExtendableContext} from 'koa';
 import Router from '@koa/router';
 import bodyParser from 'koa-bodyparser';
 import send from 'koa-send';
@@ -6,8 +6,9 @@ import {isHttpError} from 'http-errors';
 
 import {listLEDDrivers, createLEDDriver} from './routes/drivers';
 import {listLayouts, createLayout} from './routes/layouts';
+import {testProgram} from './routes/programs';
 
-async function checkJsonContentType(ctx: Koa.Context, next: Koa.Next) {
+async function checkJsonContentType(ctx: ExtendableContext, next: Koa.Next) {
     /// The === false is because null indicates no request body
     if (ctx.is('application/json') === false) {
         ctx.throw(415, 'API only accepts JSON requests');
@@ -47,7 +48,8 @@ const apiRouter = new Router({prefix: '/api'})
     .get('/drivers', listLEDDrivers)
     .post('/drivers', createLEDDriver)
     .get('/layouts', listLayouts)
-    .post('/layouts', createLayout);
+    .post('/layouts', createLayout)
+		.get('/programs/test', testProgram);
 
 const app = new Koa()
     .use(apiRouter.routes())

@@ -2,16 +2,37 @@
   import axios from 'axios';
   import LayoutComponent from './Layout.svelte';
 	import {pixelLayout as layoutLib, Layout, PixelLayout} from 'ledbetter-common';
+	import {createProgram, Program} from './program';
 
 	let layouts: Layout[] = [];
 	let layoutId = '';
+	let pixelLayout: PixelLayout | null;
+
+	let program: Program | null;
+	let programWasm: BufferSource | null = null;
+	let programPromise: Promise<void> | null;
+
+	function decodeBase64(encoded: string): Uint8Array {
+		const binStr = window.atob(encoded);
+		const len = binStr.length;
+		const decoded = new Uint8Array(len);
+		for (let i = 0; i < len; i++) {
+			decoded[i] = binStr.charCodeAt(i);
+		}
+		return decoded;
+	}
 
 	async function loadLayouts(): Promise<void> {
+
 		const response = await axios.get('/api/layouts');
 		layouts = response.data;
 	}
 
-	let pixelLayout: PixelLayout | null;
+	async function loadPrograms(): Promise<void> {
+		const response = await axios.get('/api/programs/test');
+		programWasm = decodeBase64(response.data.wasm);
+	}
+
 	$: {
 		const layout = layouts.find((layout) => layout.id === layoutId);
 		if (layout) {
@@ -20,13 +41,36 @@
 			pixelLayout = null;
 		}
 	}
+
+	$: {
+		if (programWasm && pixelLayout) {
+			if (!program) {
+				programPromise = (async () => {
+					program = await createProgram(programWasm, pixelLayout);
+				})();
+			} else {
+				programPromise = null;
+			}
+		} else {
+			program = null;
+			programPromise = null;
+		}
+	}
 </script>
 
 <div class="container">
 	<div class="columns">
     <div class="column">
-			{#if pixelLayout !== null}
-			<LayoutComponent width={640} height={640} layout={pixelLayout} />
+			{#if program !== null}
+				<p>Ready to go</p>
+			{:else}
+				{#if pixelLayout !== null}
+					<LayoutComponent width={640} height={640} layout={pixelLayout} />
+				{/if}
+				{#if programPromise !== null}
+					{#await programPromise}
+					{/await}
+				{/if}
 			{/if}
     </div>
     <div class="column">
@@ -49,6 +93,25 @@
 			<div class="notification is-danger">
 				{err}
 			</div>
+			{/await}
+
+			{#await loadPrograms()}
+				<div class="select is-loading">
+					<select>
+						<option value="">Select program</option>
+					</select>
+				</div>
+			{:then _}
+				<div class="select">
+					<select>
+						<option value="">Select program</option>
+						<option value="test" selected>Test</option>
+					</select>
+				</div>
+			{:catch err}
+				<div class="notification is-danger">
+					{err}
+				</div>
 			{/await}
     </div>
   </div>
