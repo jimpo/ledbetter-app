@@ -2,6 +2,7 @@
   import axios from 'axios';
   import LayoutComponent from './Layout.svelte';
 	import {pixelLayout as layoutLib, Layout, PixelLayout} from 'ledbetter-common';
+	import Animation from './Animation.svelte';
 	import {createProgram, Program} from './program';
 
 	let layouts: Layout[] = [];
@@ -59,60 +60,58 @@
 </script>
 
 <div class="container">
-	<div class="columns">
-    <div class="column">
-			{#if program !== null}
-				<p>Ready to go</p>
-			{:else}
-				{#if pixelLayout !== null}
-					<LayoutComponent width={640} height={640} layout={pixelLayout} />
-				{/if}
-				{#if programPromise !== null}
-					{#await programPromise}
-					{/await}
-				{/if}
+	<div class="block">
+		{#if program !== null}
+			<Animation width={1280} height={1280} {program} />
+		{:else}
+			{#if pixelLayout !== null}
+				<LayoutComponent width={1280} height={1280} layout={pixelLayout} />
 			{/if}
-    </div>
-    <div class="column">
-			{#await loadLayouts()}
+			{#if programPromise !== null}
+				{#await programPromise}
+				{/await}
+			{/if}
+		{/if}
+	</div>
+	<div class="block">
+		{#await loadLayouts()}
 			<div class="select is-loading">
 				<select>
 					<option value="">Select layout</option>
 				</select>
 			</div>
-		  {:then _}
+		{:then _}
 			<div class="select">
 				<select bind:value={layoutId}>
 					<option value="">Select layout</option>
 					{#each layouts as layout}
-					<option value={layout.id}>{layout.name}</option>
+						<option value={layout.id}>{layout.name}</option>
 					{/each}
 				</select>
 			</div>
-		  {:catch err}
+		{:catch err}
 			<div class="notification is-danger">
 				{err}
 			</div>
-			{/await}
+		{/await}
 
-			{#await loadPrograms()}
-				<div class="select is-loading">
-					<select>
-						<option value="">Select program</option>
-					</select>
-				</div>
-			{:then _}
-				<div class="select">
-					<select>
-						<option value="">Select program</option>
-						<option value="test" selected>Test</option>
-					</select>
-				</div>
-			{:catch err}
-				<div class="notification is-danger">
-					{err}
-				</div>
-			{/await}
-    </div>
-  </div>
+		{#await loadPrograms()}
+			<div class="select is-loading">
+				<select>
+					<option value="">Select program</option>
+				</select>
+			</div>
+		{:then _}
+			<div class="select">
+				<select>
+					<option value="">Select program</option>
+					<option value="test" selected>Test</option>
+				</select>
+			</div>
+		{:catch err}
+			<div class="notification is-danger">
+				{err}
+			</div>
+		{/await}
+	</div>
 </div>

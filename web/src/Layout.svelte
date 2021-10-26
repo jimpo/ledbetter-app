@@ -39,12 +39,11 @@
 </script>
 
 <svg width={width} height={height}>
-{#if layout !== null}
-{#each layout.pixelStrips as strip}
-{#each strip.pixelLocs as {x, y}}
- <circle cx="0" cy="0" r="1" fill="black" />
- <circle cx={xTrans(x)} cy={yTrans(y)} r="1" fill="black" />
-{/each}
-{/each}
-{/if}
+	{#if layout !== null}
+		{#each layout.pixelStrips as strip}
+			{#each strip.pixelLocs as {x, y}}
+				<circle cx={xTrans(x)} cy={yTrans(y)} r="1" fill="black" />
+			{/each}
+		{/each}
+	{/if}
 </svg>

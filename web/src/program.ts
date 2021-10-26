@@ -15,11 +15,11 @@ function getExportedFunction(instance: WebAssembly.Instance, name: string): Func
 }
 
 export class Program {
-	private _tick: () => void;
-	private _render: () => void;
-	private _getPixelRed: (stripIdx: number, pixelIdx: number) => number;
-	private _getPixelGrn: (stripIdx: number, pixelIdx: number) => number;
-	private _getPixelBlu: (stripIdx: number, pixelIdx: number) => number;
+	private readonly _tick: () => void;
+	private readonly _render: () => void;
+	private readonly _getPixelRed: (stripIdx: number, pixelIdx: number) => number;
+	private readonly _getPixelGrn: (stripIdx: number, pixelIdx: number) => number;
+	private readonly _getPixelBlu: (stripIdx: number, pixelIdx: number) => number;
 
 	constructor(public instance: WebAssembly.Instance, public layout: PixelLayout) {
 		const initLayout = getExportedFunction(instance, 'initLayout');
