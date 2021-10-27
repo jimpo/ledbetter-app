@@ -4,6 +4,7 @@
 	export let program: Program;
 	export let width: number;
 	export let height: number;
+	export let running: boolean;
 
 	const layout = program.layout;
 
@@ -43,21 +44,68 @@
 		return `rgb(${val.red}, ${val.grn}, ${val.blu})`;
 	}
 
+	function formatHexByte(byte: number): string {
+		return ("0" + byte.toString(16)).slice(-2).toUpperCase();
+	}
+
+	function gradiantId(val: PixelVal): string {
+		return `led${formatHexByte(val.red)}${formatHexByte(val.grn)}${formatHexByte(val.blu)}`;
+	}
+
 	let pixelColors = program.render();
-	setInterval(
-		() => {
-			program.tick();
-			pixelColors = program.render();
-		},
-		100
-	);
+	let intervalId: number | null = null;
+	$: {
+		if (running && intervalId === null) {
+			intervalId = window.setInterval(
+				() => {
+					program.tick();
+					pixelColors = program.render();
+				},
+				100
+			);
+		} else if (!running && intervalId !== null) {
+			window.clearInterval(intervalId);
+			intervalId = null;
+		}
+	}
+
+	let gradiantIds: {[key: string]: PixelVal};
+	$: {
+		gradiantIds = {};
+		for (const stripColors of pixelColors) {
+			for (const val of stripColors) {
+				gradiantIds[gradiantId(val)] = val;
+			}
+		}
+	}
 </script>
 
+<style>
+	circle {
+			mix-blend-mode: lighten;
+	}
+</style>
+
 <svg width={width} height={height}>
+	<rect width="100%" height="100%" fill="black" />
+	<defs>
+		{#each Reflect.ownKeys(gradiantIds) as id}
+			<radialGradient {id}>
+				<stop offset="0%" stop-color="white" />
+				<stop offset="35%" stop-color={svgColor(gradiantIds[id])} />
+				<stop offset="100%" stop-color={svgColor(gradiantIds[id])} stop-opacity={0} />
+			</radialGradient>
+		{/each}
+	</defs>
 	{#if layout !== null}
 		{#each layout.pixelStrips as strip, i}
 			{#each strip.pixelLocs as {x, y}, j}
-				<circle cx={xTrans(x)} cy={yTrans(y)} r="2" fill={svgColor(pixelColors[i][j])} />
+				<circle
+					cx={xTrans(x)}
+					cy={yTrans(y)}
+					r="10"
+					fill={`url('#${gradiantId(pixelColors[i][j])}')`}
+				/>
 			{/each}
 		{/each}
 	{/if}

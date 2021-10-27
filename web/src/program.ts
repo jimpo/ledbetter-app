@@ -61,9 +61,9 @@ export class Program {
 }
 
 export async function createProgram(wasm: BufferSource, layout: PixelLayout): Promise<Program> {
-	const {instance, module} = await WebAssembly.instantiate( wasm, {
+	const {instance, module: _module} = await WebAssembly.instantiate( wasm, {
 		env: {
-			abort(_msg, _file, line, column) {
+			abort(_msgRef: number, _fileNameRef: number, line: number, column: number) {
 				console.error("abort called at main.ts:" + line + ":" + column);
 			}
 		}

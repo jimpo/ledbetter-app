@@ -8,6 +8,7 @@
 	let layouts: Layout[] = [];
 	let layoutId = '';
 	let pixelLayout: PixelLayout | null;
+	let running: boolean = false;
 
 	let program: Program | null;
 	let programWasm: BufferSource | null = null;
@@ -62,7 +63,7 @@
 <div class="container">
 	<div class="block">
 		{#if program !== null}
-			<Animation width={1280} height={1280} {program} />
+			<Animation width={1280} height={1280} {program} {running} />
 		{:else}
 			{#if pixelLayout !== null}
 				<LayoutComponent width={1280} height={1280} layout={pixelLayout} />
@@ -113,5 +114,23 @@
 				{err}
 			</div>
 		{/await}
+
+		<button
+			class="button is-success is-light"
+			on:click|preventDefault={() => running = true}
+			disabled={program === null || running ? true : null}>
+			<span class="icon">
+				<i class="fas fa-play"></i>
+			</span>
+		</button>
+
+		<button
+			class="button is-danger is-light"
+			on:click|preventDefault={() => running = false}
+			disabled={program === null || !running ? true : null}>
+			<span class="icon">
+				<i class="fas fa-stop"></i>
+			</span>
+		</button>
 	</div>
 </div>
