@@ -137,7 +137,7 @@ SEGMENT 150 pixels
 
 	<div class="columns">
 		<div class="column">
-			<Animation width={640} height={640} {layout} />
+			<Animation aspectRatio={1} {layout} />
 		</div>
 		<div class="column">
       <textarea

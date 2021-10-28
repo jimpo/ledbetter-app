@@ -3,8 +3,7 @@
 	import {createWasmProgram, TrivialProgram} from './program';
 	import {PixelLayout} from 'ledbetter-common';
 
-	export let width: number;
-	export let height: number;
+	export let aspectRatio: number = 1;
 	export let layout: PixelLayout | null = null;
 	export let programWasm: BufferSource | null = null;
 	export let running: boolean = false;
@@ -20,35 +19,29 @@
 		}
 	}
 
-	let xTrans: (x: number) => number;
-	let yTrans: (y: number) => number;
+	let viewBox: {xMin: number, yMin: number, width: number, height: number};
 	$: {
 		if (layout !== null) {
 			const bounds = layout.boundingBox();
 			const boundsHeight = bounds.yMax - bounds.yMin;
 			const boundsWidth = bounds.xMax - bounds.xMin;
-			let scale: number;
-			if (boundsHeight > 0 || boundsWidth > 0) {
-				const buffer = 20;
-				if (boundsWidth * height < width * boundsHeight) {
-					// display region is wider than the boundingBox
-					scale = Math.max(height - 2 * buffer, 0) / boundsHeight;
-				} else {
-					// boundingBox is wider than the display region
-					scale = Math.max(width - 2 * buffer, 0) / boundsWidth;
-				}
-			} else {
-				scale = 0;
-			}
+			const xCenter = (bounds.xMin + bounds.xMax) / 2;
+			const yCenter = (bounds.yMin + bounds.yMax) / 2;
 
-			const xShift = (width - scale * (bounds.xMin + bounds.xMax)) / 2;
-			const yShift = (height + scale * (bounds.yMin + bounds.yMax)) / 2;
+			const bufferPct = 2;
+			const scale = (1 + 2 * bufferPct / 100);
+			const viewBoxWidth = Math.max(boundsWidth, aspectRatio * boundsHeight) * scale;
+			const viewBoxHeight = Math.max(boundsHeight, boundsWidth / aspectRatio) * scale;
 
-			xTrans = (x) => xShift + x * scale;
-			yTrans = (y) => yShift - y * scale;
+			viewBox = {
+				xMin: xCenter - viewBoxWidth / 2,
+				// This is kind of a hack to get the y-axis coordinates going bottom to top
+				yMin: -yCenter - viewBoxHeight / 2,
+				width: viewBoxWidth,
+				height: viewBoxHeight,
+			};
 		} else {
-			xTrans = (_) => 0;
-			yTrans = (_) => 0;
+			viewBox = {xMin: 0, yMin: 0, width: aspectRatio, height: 1};
 		}
 	}
 
@@ -100,8 +93,14 @@
 	}
 </style>
 
-<svg width={width} height={height}>
-	<rect width="100%" height="100%" fill="black" />
+<svg width="100%" viewBox={`${viewBox.xMin} ${viewBox.yMin} ${viewBox.width} ${viewBox.height}`}>
+	<rect
+		x={viewBox.xMin}
+		y={viewBox.yMin}
+		width={viewBox.width}
+		height={viewBox.height}
+		fill="black"
+	/>
 	<defs>
 		{#each Object.getOwnPropertyNames(gradiantIds) as id}
 			<radialGradient {id}>
@@ -114,12 +113,7 @@
 	{#if layout !== null}
 		{#each layout.pixelStrips as strip, i}
 			{#each strip.pixelLocs as {x, y}, j}
-				<circle
-					cx={xTrans(x)}
-					cy={yTrans(y)}
-					r="10"
-					fill={`url('#${gradiantId(pixelColors[i][j])}')`}
-				/>
+				<circle cx={x} cy={-y} r={1/60} fill={`url('#${gradiantId(pixelColors[i][j])}')`} />
 			{/each}
 		{/each}
 	{/if}

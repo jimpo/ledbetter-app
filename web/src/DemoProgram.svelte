@@ -43,7 +43,7 @@
 	</nav>
 
 	<div class="block">
-		<Animation width={1280} height={1280} layout={pixelLayout} {programWasm} {running} />
+		<Animation aspectRatio={1} layout={pixelLayout} {programWasm} {running} />
 	</div>
 	<div class="block">
 		{#await loadLayouts()}
