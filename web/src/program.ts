@@ -14,14 +14,25 @@ function getExportedFunction(instance: WebAssembly.Instance, name: string): Func
 	return exportVal;
 }
 
-export class Program {
+export interface Program {
+	tick(): void;
+	render(): PixelVal[][];
+}
+
+export class WasmProgram {
 	private readonly _tick: () => void;
 	private readonly _render: () => void;
 	private readonly _getPixelRed: (stripIdx: number, pixelIdx: number) => number;
 	private readonly _getPixelGrn: (stripIdx: number, pixelIdx: number) => number;
 	private readonly _getPixelBlu: (stripIdx: number, pixelIdx: number) => number;
+	private readonly _pixels: PixelVal[][];
 
-	constructor(public instance: WebAssembly.Instance, public layout: PixelLayout) {
+	constructor(
+		public layout: PixelLayout,
+		instance: WebAssembly.Instance,
+		_module: WebAssembly.Module,
+	) {
+		// TODO: Validate module
 		const initLayout = getExportedFunction(instance, 'initLayout');
 		const initStrip = getExportedFunction(instance, 'initStrip');
 		this._tick = getExportedFunction(instance, 'tick') as () => void;
@@ -37,6 +48,8 @@ export class Program {
 		for (const stripIdx in layout.pixelStrips) {
 			initStrip(stripIdx, layout.pixelStrips[stripIdx].length);
 		}
+
+		this._pixels = trivialPixelValArray(layout);
 	}
 
 	tick(): void {
@@ -45,23 +58,20 @@ export class Program {
 
 	render(): PixelVal[][] {
 		this._render();
-		const pixels = [];
-		for (let i = 0; i < this.layout.pixelStrips.length; i++) {
-			const stripPixels = [];
-			for (let j = 0; j < this.layout.pixelStrips[i].length; j++) {
-				const red = this._getPixelRed(i, j);
-				const grn = this._getPixelGrn(i, j);
-				const blu = this._getPixelBlu(i, j);
-				stripPixels.push({red, grn, blu});
+		for (let i = 0; i < this._pixels.length; i++) {
+			for (let j = 0; j < this._pixels[i].length; j++) {
+				const pixelVal = this._pixels[i][j];
+				pixelVal.red = this._getPixelRed(i, j);
+				pixelVal.grn = this._getPixelGrn(i, j);
+				pixelVal.blu = this._getPixelBlu(i, j);
 			}
-			pixels.push(stripPixels);
 		}
-		return pixels;
+		return this._pixels;
 	}
 }
 
-export async function createProgram(wasm: BufferSource, layout: PixelLayout): Promise<Program> {
-	const {instance, module: _module} = await WebAssembly.instantiate( wasm, {
+export async function createWasmProgram(wasm: BufferSource, layout: PixelLayout): Promise<Program> {
+	const {instance, module} = await WebAssembly.instantiate( wasm, {
 		env: {
 			abort(_msgRef: number, _fileNameRef: number, line: number, column: number) {
 				console.error("abort called at main.ts:" + line + ":" + column);
@@ -69,5 +79,35 @@ export async function createProgram(wasm: BufferSource, layout: PixelLayout): Pr
 		}
 	});
 
-	return new Program(instance, layout);
+	return new WasmProgram(layout, instance, module);
+}
+
+export class TrivialProgram {
+	private readonly _pixels: PixelVal[][];
+
+	constructor(public layout: PixelLayout) {
+		this._pixels = trivialPixelValArray(layout);
+	}
+
+	tick(): void {}
+
+	render(): PixelVal[][] {
+		return this._pixels;
+	}
+}
+
+function trivialPixelValArray(layout: PixelLayout): PixelVal[][] {
+	const pixels = [];
+	for (let i = 0; i < layout.pixelStrips.length; i++) {
+		const stripPixels = [];
+		for (let j = 0; j < layout.pixelStrips[i].length; j++) {
+			stripPixels.push({
+				red: 255,
+				grn: 255,
+				blu: 255,
+			});
+		}
+		pixels.push(stripPixels);
+	}
+	return pixels;
 }

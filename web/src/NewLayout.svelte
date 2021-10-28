@@ -1,6 +1,6 @@
 <script lang="ts">
 	import axios, {AxiosError} from 'axios';
-	import Layout from './Layout.svelte';
+	import Animation from './Animation.svelte';
 	import {pixelLayout, PixelLayout} from 'ledbetter-common';
 	import {useFocus, Link} from 'svelte-navigator';
 
@@ -137,7 +137,7 @@ SEGMENT 150 pixels
 
 	<div class="columns">
 		<div class="column">
-			<Layout width={640} height={640} layout={layout} />
+			<Animation width={640} height={640} {layout} />
 		</div>
 		<div class="column">
       <textarea

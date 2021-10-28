@@ -1,12 +1,24 @@
 <script lang="ts">
 	import type {Program, PixelVal} from './program';
+	import {createWasmProgram, TrivialProgram} from './program';
+	import {PixelLayout} from 'ledbetter-common';
 
-	export let program: Program;
 	export let width: number;
 	export let height: number;
-	export let running: boolean;
+	export let layout: PixelLayout | null = null;
+	export let programWasm: BufferSource | null = null;
+	export let running: boolean = false;
 
-	const layout = program.layout;
+	let program: Program;
+
+	$: {
+		program = new TrivialProgram(layout || new PixelLayout([]));
+		if (programWasm && layout) {
+			(async () => {
+				program = await createWasmProgram(programWasm, layout);
+			})();
+		}
+	}
 
 	let xTrans: (x: number) => number;
 	let yTrans: (y: number) => number;
@@ -52,7 +64,9 @@
 		return `led${formatHexByte(val.red)}${formatHexByte(val.grn)}${formatHexByte(val.blu)}`;
 	}
 
-	let pixelColors = program.render();
+	let pixelColors: PixelVal[][];
+	$: pixelColors = program.render();
+
 	let intervalId: number | null = null;
 	$: {
 		if (running && intervalId === null) {
@@ -89,7 +103,7 @@
 <svg width={width} height={height}>
 	<rect width="100%" height="100%" fill="black" />
 	<defs>
-		{#each Reflect.ownKeys(gradiantIds) as id}
+		{#each Object.getOwnPropertyNames(gradiantIds) as id}
 			<radialGradient {id}>
 				<stop offset="0%" stop-color="white" />
 				<stop offset="35%" stop-color={svgColor(gradiantIds[id])} />

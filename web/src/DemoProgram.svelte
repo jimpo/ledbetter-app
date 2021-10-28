@@ -1,18 +1,13 @@
 <script lang="ts">
   import axios from 'axios';
-  import LayoutComponent from './Layout.svelte';
 	import {pixelLayout as layoutLib, Layout, PixelLayout} from 'ledbetter-common';
 	import Animation from './Animation.svelte';
-	import {createProgram, Program} from './program';
 
 	let layouts: Layout[] = [];
 	let layoutId = '';
 	let pixelLayout: PixelLayout | null;
 	let running: boolean = false;
-
-	let program: Program | null;
 	let programWasm: BufferSource | null = null;
-	let programPromise: Promise<void> | null;
 
 	function decodeBase64(encoded: string): Uint8Array {
 		const binStr = window.atob(encoded);
@@ -25,7 +20,6 @@
 	}
 
 	async function loadLayouts(): Promise<void> {
-
 		const response = await axios.get('/api/layouts');
 		layouts = response.data;
 	}
@@ -37,42 +31,19 @@
 
 	$: {
 		const layout = layouts.find((layout) => layout.id === layoutId);
-		if (layout) {
-			pixelLayout = layoutLib.parseCode(layout.sourceCode);
-		} else {
-			pixelLayout = null;
-		}
-	}
-
-	$: {
-		if (programWasm && pixelLayout) {
-			if (!program) {
-				programPromise = (async () => {
-					program = await createProgram(programWasm, pixelLayout);
-				})();
-			} else {
-				programPromise = null;
-			}
-		} else {
-			program = null;
-			programPromise = null;
-		}
+		pixelLayout = layout ? layoutLib.parseCode(layout.sourceCode) : null;
 	}
 </script>
 
 <div class="container">
+	<nav class="breadcrumb" aria-label="breadcrumbs">
+		<ul>
+			<li class="is-active"><a href="/demo" aria-current="page">Demo Program</a></li>
+		</ul>
+	</nav>
+
 	<div class="block">
-		{#if program !== null}
-			<Animation width={1280} height={1280} {program} {running} />
-		{:else}
-			{#if pixelLayout !== null}
-				<LayoutComponent width={1280} height={1280} layout={pixelLayout} />
-			{/if}
-			{#if programPromise !== null}
-				{#await programPromise}
-				{/await}
-			{/if}
-		{/if}
+		<Animation width={1280} height={1280} layout={pixelLayout} {programWasm} {running} />
 	</div>
 	<div class="block">
 		{#await loadLayouts()}
@@ -118,7 +89,7 @@
 		<button
 			class="button is-success is-light"
 			on:click|preventDefault={() => running = true}
-			disabled={program === null || running ? true : null}>
+			disabled={programWasm === null || running ? true : null}>
 			<span class="icon">
 				<i class="fas fa-play"></i>
 			</span>
@@ -127,7 +98,7 @@
 		<button
 			class="button is-danger is-light"
 			on:click|preventDefault={() => running = false}
-			disabled={program === null || !running ? true : null}>
+			disabled={programWasm === null || !running ? true : null}>
 			<span class="icon">
 				<i class="fas fa-stop"></i>
 			</span>
