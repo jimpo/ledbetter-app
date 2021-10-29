@@ -1,4 +1,4 @@
-const {db, beginGlobalTransaction, rollbackGlobalTransaction} = require('../src/db');
+import {db, beginGlobalTransaction, rollbackGlobalTransaction} from '../src/db';
 
 beforeEach(async () => await beginGlobalTransaction());
 afterEach(async () => await rollbackGlobalTransaction());

@@ -2,7 +2,7 @@ import {randomUUID} from 'crypto';
 import Koa, {ExtendableContext} from 'koa';
 import Joi from 'joi';
 
-import * as drivers from '../drivers';
+import * as drivers from '../drivers.js';
 
 export async function listLEDDrivers(ctx: ExtendableContext, next: Koa.Next) {
     ctx.body = await drivers.list();

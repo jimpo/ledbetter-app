@@ -1,6 +1,7 @@
-import {db} from './db';
-import {UniquenessError} from './errors';
 import {Layout} from 'ledbetter-common';
+
+import {db} from './db.js';
+import {UniquenessError} from './errors.js';
 
 const LIST_LIMIT: number = 10;
 

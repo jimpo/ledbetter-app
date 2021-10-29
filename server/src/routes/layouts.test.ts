@@ -1,8 +1,9 @@
 import request from 'supertest';
 
-import app from '../app';
+import app from '../app.js';
 import {Layout} from 'ledbetter-common';
-import {UUID_REGEX} from '../../test/util';
+
+import {UUID_REGEX} from '../../test/util.js';
 
 
 test('POST /api/layouts creates a new layout', async () => {
@@ -39,7 +40,7 @@ SEGMENT 150 pixels
     expect(responseLayouts).toStrictEqual([responseLayout]);
 });
 
-test.only('POST /api/layouts returns error on duplicate name', async () => {
+test('POST /api/layouts returns error on duplicate name', async () => {
     const layoutProps = {
         name: "Living Room Center",
 		sourceCode:

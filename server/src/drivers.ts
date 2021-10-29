@@ -1,4 +1,4 @@
-import {db} from './db';
+import {db} from './db.js';
 
 const LIST_LIMIT: number = 10;
 

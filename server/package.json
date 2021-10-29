@@ -2,12 +2,13 @@
 	"name": "ledbetter-server",
 	"version": "1.0.0",
 	"description": "",
+    "type": "module",
 	"private": true,
 	"scripts": {
-		"start": "tsc && node -r dotenv/config dist/src/server.js",
-		"migrate": "npx ts-node -r dotenv/config node_modules/.bin/knex migrate:latest",
-		"migrate_test": "NODE_ENV=test DOTENV_CONFIG_PATH=.env.test npx ts-node -r dotenv/config node_modules/.bin/knex migrate:latest",
-		"test": "jest"
+		"start": "npx tsc && npx node -r dotenv/config dist/src/server.js",
+		"migrate": "npx node --loader ts-node/esm -r dotenv/config node_modules/.bin/knex migrate:latest",
+		"migrate_test": "NODE_ENV=test DOTENV_CONFIG_PATH=.env.test npx node --loader ts-node/esm -r dotenv/config node_modules/.bin/knex migrate:latest",
+		"test": "NODE_OPTIONS=--experimental-vm-modules npx jest"
 	},
 	"keywords": [],
 	"author": "",
@@ -15,6 +16,7 @@
 	"dependencies": {
 		"@koa/router": "^10.1.1",
 		"@types/koa-bodyparser": "^4.3.3",
+		"assemblyscript": "^0.19.18",
 		"dotenv": "^10.0.0",
 		"joi": "^17.4.2",
 		"knex": "^0.95.11",
@@ -22,7 +24,8 @@
 		"koa-bodyparser": "^4.3.0",
 		"koa-send": "^5.0.1",
 		"ledbetter-common": "file:../common",
-		"mysql2": "^2.3.0"
+		"mysql2": "^2.3.0",
+		"tempy": "^2.0.0"
 	},
 	"devDependencies": {
 		"@types/jest": "^27.0.1",
@@ -35,7 +38,7 @@
 		"sqlite3": "^5.0.2",
 		"supertest": "^6.1.6",
 		"ts-jest": "^27.0.5",
-		"ts-node": "^10.3.0",
-		"typescript": "^4.4.2"
+		"ts-node": "^10.4.0",
+		"typescript": "^4.5.0-beta"
 	}
 }

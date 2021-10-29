@@ -136,7 +136,7 @@ SEGMENT 150 pixels
 	</div>
 
 	<div class="columns">
-		<div class="column">
+		<div class="column is-three-quarters">
 			<Animation aspectRatio={1} {layout} />
 		</div>
 		<div class="column">

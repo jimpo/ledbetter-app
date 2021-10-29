@@ -3,3 +3,9 @@ export class UniquenessError extends Error {
 		super(message);
 	}
 }
+
+export class InvalidProgramSourcePathError extends Error {
+	constructor(public filePath: string, message: string) {
+		super(`invalid file path "${filePath}": ${message}`);
+	}
+}

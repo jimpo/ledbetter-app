@@ -10,6 +10,7 @@
 	import Drivers from './Drivers.svelte';
 	import Landing from './Landing.svelte';
 	import NewLayout from './NewLayout.svelte';
+	import NewProgram from './NewProgram.svelte';
 </script>
 
 <main class="section">
@@ -19,5 +20,6 @@
 		<Route path="devices/" component={Devices}/>
 		<Route path="drivers/" component={Drivers}/>
 		<Route path="layouts/new" component={NewLayout}/>
+		<Route path="programs/new" component={NewProgram}/>
 	</Router>
 </main>

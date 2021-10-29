@@ -2,8 +2,8 @@ import { randomUUID } from 'crypto';
 import Koa, {Context} from 'koa';
 import Joi from 'joi';
 
-import * as layouts from '../layouts';
-import {UniquenessError} from '../errors';
+import * as layouts from '../layouts.js';
+import {UniquenessError} from '../errors.js';
 
 export async function listLayouts(ctx: Context, next: Koa.Next) {
 	ctx.body = await layouts.list();

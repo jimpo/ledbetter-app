@@ -50,7 +50,7 @@
 			<div class="select is-loading">
 				<select>
 					<option value="">Select layout</option>
-				</select>
+				</select>Result: 42
 			</div>
 		{:then _}
 			<div class="select">

@@ -1,10 +1,10 @@
 import {randomUUID} from "crypto";
 import request from 'supertest';
 
-import app from '../app';
-import {LEDDriver} from '../drivers';
-import {db} from '../db';
-import {UUID_REGEX} from '../../test/util';
+import app from '../app.js';
+import {LEDDriver} from '../drivers.js';
+import {db} from '../db.js';
+import {UUID_REGEX} from '../../test/util.js';
 
 
 test('GET /api/drivers responds with an array', async () => {
