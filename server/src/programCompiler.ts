@@ -27,7 +27,7 @@ export async function compile(files: {[filePath: string]: string}): Promise<Buff
 	for (const filePath in files) {
 		const checkedPath = checkFilePath(filePath);
 		try {
-			checkedFiles[checkedPath] = Buffer.from(files[filePath], 'base64');
+			checkedFiles[checkedPath] = Buffer.from(files[filePath]);
 		} catch (err) {
 			if (err instanceof Error) {
 				throw new InvalidProgramSourcePathError(filePath, err.message);

@@ -3,6 +3,7 @@ import {readFileSync} from 'fs';
 import Joi from "joi";
 
 import {compile} from '../programCompiler.js';
+import {InvalidProgramSourcePathError, CompilationError} from '../errors';
 
 const TEST_PROGRAM_WASM = readFileSync('../testProgram.wasm');
 
@@ -25,5 +26,23 @@ export async function compileProgram(ctx: Koa.Context, next: Koa.Next): Promise<
 		return await next();
 	}
 
-	await compile(body.files as {[filePath: string]: string});
+	let output: Buffer;
+	try {
+		output = await compile(body.files as {[filePath: string]: string});
+	} catch (err) {
+		if (
+			err instanceof InvalidProgramSourcePathError ||
+			err instanceof CompilationError
+		) {
+			ctx.status = 422;
+			ctx.body = {error: err.message};
+			return await next();
+		}
+		throw err;
+	}
+	ctx.body = {
+		wasm: output.toString('base64'),
+	};
+
+	return await next();
 }

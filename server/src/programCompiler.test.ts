@@ -9,7 +9,7 @@ function base64Encode(str: string): string {
 test('compile requires filenames with relative paths', async () => {
 	await expect(async () => {
 		await compile({
-			'/root/PixelAnimation.ts': base64Encode("class PixelAnimation {}"),
+			'/root/PixelAnimation.ts': "class PixelAnimation {}",
 		})
 	}).rejects.toBeInstanceOf(InvalidProgramSourcePathError);
 });
@@ -17,7 +17,7 @@ test('compile requires filenames with relative paths', async () => {
 test('compile requires filenames without ..', async () => {
 	await expect(async () => {
 		await compile({
-			'tricky/../../PixelAnimation.ts': base64Encode("class PixelAnimation {}"),
+			'tricky/../../PixelAnimation.ts': "class PixelAnimation {}",
 		})
 	}).rejects.toBeInstanceOf(InvalidProgramSourcePathError);
 });
@@ -25,7 +25,7 @@ test('compile requires filenames without ..', async () => {
 test('compile requires filenames to have ts extension', async () => {
 	await expect(async () => {
 		await compile({
-			'PixelAnimation.wat': base64Encode("class PixelAnimation {}"),
+			'PixelAnimation.wat': "class PixelAnimation {}",
 		});
 	}).rejects.toBeInstanceOf(InvalidProgramSourcePathError);
 });
@@ -33,7 +33,7 @@ test('compile requires filenames to have ts extension', async () => {
 test('compile invalid source code', async () => {
 	await expect(async () => {
 		await compile({
-			'PixelAnimation.ts': base64Encode("class PixelAnimation {}"),
+			'PixelAnimation.ts': "class PixelAnimation {}",
 		});
 	}).rejects.toBeInstanceOf(CompilationError);
 })
@@ -54,6 +54,6 @@ export class PixelAnimation {
 }
 `;
 	await compile({
-		'PixelAnimation.ts': base64Encode(source),
+		'PixelAnimation.ts': source,
 	});
 });
