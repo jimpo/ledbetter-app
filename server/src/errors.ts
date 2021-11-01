@@ -9,3 +9,9 @@ export class InvalidProgramSourcePathError extends Error {
 		super(`invalid file path "${filePath}": ${message}`);
 	}
 }
+
+export class CompilationError extends Error {
+	constructor(public source: Error, public stderr: string) {
+		super(`${source.message}\n${stderr}`);
+	}
+}
