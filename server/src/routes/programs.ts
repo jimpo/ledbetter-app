@@ -3,7 +3,7 @@ import {readFileSync} from 'fs';
 import Joi from "joi";
 
 import {compile} from '../programCompiler.js';
-import {InvalidProgramSourcePathError, CompilationError} from '../errors';
+import {InvalidProgramSourcePathError, CompilationError} from '../errors.js';
 
 const TEST_PROGRAM_WASM = readFileSync('../testProgram.wasm');
 

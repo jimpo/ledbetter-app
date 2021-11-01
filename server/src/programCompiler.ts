@@ -1,8 +1,8 @@
-import asc from 'assemblyscript/cli/asc';
+import assert from 'assert';
+import childProcess from 'child_process';
 import path from 'path';
 import fs from 'fs/promises';
 import tempy from 'tempy';
-import {promisify} from 'util';
 
 import {CompilationError, InvalidProgramSourcePathError} from './errors.js';
 
@@ -54,33 +54,38 @@ export async function compile(files: {[filePath: string]: string}): Promise<Buff
 			await fs.copyFile(srcPath, dstPath);
 		}
 
-		await asc.ready;
-
 		const outputPath = path.join(baseDirPath, "output.wasm");
-		const stdout = asc.createMemoryStream();
-		const stderr = asc.createMemoryStream();
-		await promisify((callback: (err?: any) => void) => {
-			asc.main(
-				[
-					"main.ts",
-					"--baseDir", srcDirPath,
-					"--binaryFile", outputPath,
-					"--optimize",
-				],
-				{
-					stdout,
-					stderr,
-				},
-				(err) => {
-					if (err) {
-						callback(new CompilationError(err, stderr.toString()));
-					} else {
-						callback();
+		const args = [
+				"main.ts",
+				"--baseDir", srcDirPath,
+				"--binaryFile", outputPath,
+				"--optimize",
+			];
+		// Run in subprocess because of https://github.com/AssemblyScript/assemblyscript/issues/2112
+		const ascProc = childProcess.fork('./node_modules/.bin/asc', args, {
+			stdio: ['ignore', 'ignore', 'pipe', 'ipc'],
+		});
+		try {
+			await new Promise<void>((resolve, reject) => {
+				ascProc.on('error', (err) => {
+					console.log(err);
+					reject(err);
+				});
+				ascProc.on('exit', (code, signal) => {
+					if (code === 0) {
+						return resolve();
 					}
-					return 0;
-				},
-			);
-		})();
+					reject(new Error(`asc exited with status ${code} on signal ${signal}`));
+				});
+			});
+		} catch (err) {
+			if (err instanceof Error) {
+				assert(ascProc.stderr !== null, "fork was called with stderr piped to parent");
+				const stderr = await ascProc.stderr.read();
+				throw new CompilationError(err, stderr);
+			}
+			throw err;
+		}
 
 		output = await fs.readFile(outputPath);
 	});
