@@ -1,6 +1,7 @@
 <script lang="ts">
   import axios from 'axios';
 	import {pixelLayout as layoutLib, Layout, PixelLayout} from 'ledbetter-common';
+	import {decodeBase64} from './util';
 	import Animation from './Animation.svelte';
 
 	let layouts: Layout[] = [];
@@ -9,15 +10,6 @@
 	let running: boolean = false;
 	let programWasm: BufferSource | null = null;
 
-	function decodeBase64(encoded: string): Uint8Array {
-		const binStr = window.atob(encoded);
-		const len = binStr.length;
-		const decoded = new Uint8Array(len);
-		for (let i = 0; i < len; i++) {
-			decoded[i] = binStr.charCodeAt(i);
-		}
-		return decoded;
-	}
 
 	async function loadLayouts(): Promise<void> {
 		const response = await axios.get('/api/layouts');

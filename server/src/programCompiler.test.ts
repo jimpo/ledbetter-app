@@ -31,12 +31,14 @@ test('compile requires filenames to have ts extension', async () => {
 });
 
 test('compile invalid source code', async () => {
-	await expect(async () => {
+	const expectErr = await expect(async () => {
 		await compile({
 			'PixelAnimation.ts': "class PixelAnimation {}",
 		});
-	}).rejects.toBeInstanceOf(CompilationError);
-})
+	}).rejects;
+	await expectErr.toBeInstanceOf(CompilationError);
+	await expectErr.toThrow(/Module 'PixelAnimation' has no exported member 'PixelAnimation'/);
+});
 
 test('compile valid source code', async () => {
 	const source = `

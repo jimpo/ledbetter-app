@@ -30,10 +30,11 @@ export async function compileProgram(ctx: Koa.Context, next: Koa.Next): Promise<
 	try {
 		output = await compile(body.files as {[filePath: string]: string});
 	} catch (err) {
-		if (
-			err instanceof InvalidProgramSourcePathError ||
-			err instanceof CompilationError
-		) {
+		if (err instanceof CompilationError) {
+			ctx.status = 422;
+			ctx.body = {error: err.stderr || err.message};
+			return await next();
+		} else if (err instanceof InvalidProgramSourcePathError) {
 			ctx.status = 422;
 			ctx.body = {error: err.message};
 			return await next();

@@ -63,15 +63,20 @@ export async function compile(files: {[filePath: string]: string}): Promise<Buff
 			];
 		// Run in subprocess because of https://github.com/AssemblyScript/assemblyscript/issues/2112
 		const ascProc = childProcess.fork('./node_modules/.bin/asc', args, {
-			stdio: ['ignore', 'ignore', 'pipe', 'ipc'],
+			stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
 		});
+
+		let stderr = '';
+		assert(ascProc.stderr !== null, "fork was called with stderr piped to parent");
+		ascProc.stderr.on('data', (chunk) => stderr += chunk);
+
 		try {
 			await new Promise<void>((resolve, reject) => {
 				ascProc.on('error', (err) => {
 					console.log(err);
 					reject(err);
 				});
-				ascProc.on('exit', (code, signal) => {
+				ascProc.on('close', (code, signal) => {
 					if (code === 0) {
 						return resolve();
 					}
@@ -80,8 +85,6 @@ export async function compile(files: {[filePath: string]: string}): Promise<Buff
 			});
 		} catch (err) {
 			if (err instanceof Error) {
-				assert(ascProc.stderr !== null, "fork was called with stderr piped to parent");
-				const stderr = await ascProc.stderr.read();
 				throw new CompilationError(err, stderr);
 			}
 			throw err;

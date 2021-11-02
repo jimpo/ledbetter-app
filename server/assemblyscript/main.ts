@@ -33,10 +33,6 @@ export function tick(): void {
 	animation.tick();
 }
 
-export function render(): void {
-	animation.render();
-}
-
 export function getPixelRed(stripIdx: i32, pixelIdx: i32): u8 {
 	return pixels[stripIdx][pixelIdx].val.red;
 }

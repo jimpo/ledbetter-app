@@ -2,8 +2,9 @@
 	import Animation from './Animation.svelte';
 	import type {Layout, PixelLayout} from 'ledbetter-common';
 	import {useFocus, Link} from 'svelte-navigator';
-	import axios from "axios";
+	import axios, {AxiosError} from "axios";
 	import {pixelLayout as layoutLib} from "ledbetter-common";
+	import {decodeBase64} from './util.ts';
 
 	const registerFocus = useFocus();
 	export let navigate;
@@ -21,7 +22,7 @@
 	let programWasm: BufferSource | null = null;
 
 	const SAMPLE_PROGRAM_CODE =
-		`import {Pixel} from './types';
+		`import {Pixel} from './mainTypes';
 
 export class PixelAnimation {
   constructor(private pixels: Pixel[][]) {
@@ -29,14 +30,11 @@ export class PixelAnimation {
 
   tick(): void {
   }
-
-  render(): void {
-  }
 }
 `;
 
 	let programCode = SAMPLE_PROGRAM_CODE;
-	let programCodeError: Error | null = null;
+	let programCodeError: string | null = null;
 
 	async function handleCreate() {
 
@@ -47,10 +45,33 @@ export class PixelAnimation {
 		layouts = response.data;
 	}
 
+	async function compileProgram(): Promise<void> {
+		const files: {[fileName: string]: string} = {'PixelAnimation.ts': programCode};
+
+		let response;
+		try {
+			response = await axios.post('/api/programs/compile', {files});
+		} catch (untypedErr) {
+			const err = untypedErr as AxiosError;
+			if (err.response.status === 422 &&
+				err.response.data instanceof Object &&
+				err.response.data.hasOwnProperty('error')) {
+				programWasm = null;
+				programCodeError = err.response.data.error;
+				return;
+			}
+		}
+
+		programWasm = decodeBase64(response.data.wasm);
+		programCodeError = null;
+	}
+
 	$: {
 		const layout = layouts.find((layout) => layout.id === layoutId);
 		pixelLayout = layout ? layoutLib.parseCode(layout.sourceCode) : null;
 	}
+
+	compileProgram();
 </script>
 
 <style>
@@ -124,7 +145,7 @@ export class PixelAnimation {
 	<div class="columns">
 		<div class="column is-three-quarters">
 			<div class="block">
-				<Animation aspectRatio={1} layout={pixelLayout} />
+				<Animation aspectRatio={1} layout={pixelLayout} {programWasm} {running} />
 			</div>
 
 			<div class="block">
@@ -174,13 +195,14 @@ export class PixelAnimation {
 				class:program-code-valid={programCodeError === null}
 				class:program-code-invalid={programCodeError !== null}
 				bind:value={programCode}
+				on:focusout={compileProgram}
 				disabled={creating ? true : null}
 			/>
 			{#if programCodeError !== null}
       <textarea
 				class="textarea program-code-error has-fixed-size is-danger"
 				readonly>
-			  {programCodeError.message}
+			  {programCodeError}
 			</textarea>
 			{/if}
 		</div>

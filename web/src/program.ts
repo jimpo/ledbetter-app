@@ -21,7 +21,6 @@ export interface Program {
 
 export class WasmProgram {
 	private readonly _tick: () => void;
-	private readonly _render: () => void;
 	private readonly _getPixelRed: (stripIdx: number, pixelIdx: number) => number;
 	private readonly _getPixelGrn: (stripIdx: number, pixelIdx: number) => number;
 	private readonly _getPixelBlu: (stripIdx: number, pixelIdx: number) => number;
@@ -33,10 +32,7 @@ export class WasmProgram {
 		_module: WebAssembly.Module,
 	) {
 		// TODO: Validate module
-		const initLayout = getExportedFunction(instance, 'initLayout');
-		const initStrip = getExportedFunction(instance, 'initStrip');
 		this._tick = getExportedFunction(instance, 'tick') as () => void;
-		this._render = getExportedFunction(instance, 'render') as () => void;
 		this._getPixelRed = getExportedFunction(instance, 'getPixelRed') as
 			(stripIdx: number, pixelIdx: number) => number;
 		this._getPixelGrn = getExportedFunction(instance, 'getPixelGrn') as
@@ -44,12 +40,26 @@ export class WasmProgram {
 		this._getPixelBlu = getExportedFunction(instance, 'getPixelBlu') as
 			(stripIdx: number, pixelIdx: number) => number;
 
-		initLayout(layout.pixelStrips.length);
-		for (const stripIdx in layout.pixelStrips) {
-			initStrip(stripIdx, layout.pixelStrips[stripIdx].length);
-		}
-
 		this._pixels = trivialPixelValArray(layout);
+		this._initLayout(instance);
+	}
+
+	_initLayout(instance: WebAssembly.Instance): void {
+		const initLayoutSetNumStrips = getExportedFunction(instance, 'initLayoutSetNumStrips');
+		const initLayoutSetStripLen = getExportedFunction(instance, 'initLayoutSetStripLen');
+		const initLayoutSetPixelLoc = getExportedFunction(instance, 'initLayoutSetPixelLoc');
+		const initLayoutDone = getExportedFunction(instance, 'initLayoutDone');
+
+		initLayoutSetNumStrips(this.layout.pixelStrips.length);
+		for (const stripIdx in this.layout.pixelStrips) {
+			const strip = this.layout.pixelStrips[stripIdx];
+			initLayoutSetStripLen(stripIdx, strip.length);
+			for (const pixelIdx in strip.pixelLocs) {
+				const pixelLoc = strip.pixelLocs[pixelIdx];
+				initLayoutSetPixelLoc(stripIdx, pixelIdx, pixelLoc.x, pixelLoc.y);
+			}
+		}
+		initLayoutDone();
 	}
 
 	tick(): void {
@@ -57,7 +67,6 @@ export class WasmProgram {
 	}
 
 	render(): PixelVal[][] {
-		this._render();
 		for (let i = 0; i < this._pixels.length; i++) {
 			for (let j = 0; j < this._pixels[i].length; j++) {
 				const pixelVal = this._pixels[i][j];
