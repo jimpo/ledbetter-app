@@ -6,7 +6,7 @@ import {isHttpError} from 'http-errors';
 
 import {listLEDDrivers, createLEDDriver} from './routes/drivers.js';
 import {listLayouts, createLayout} from './routes/layouts.js';
-import {testProgram, compileProgram} from './routes/programs.js';
+import {listPrograms, compileProgram, createProgram} from './routes/programs.js';
 
 async function checkJsonContentType(ctx: ExtendableContext, next: Koa.Next) {
     /// The === false is because null indicates no request body
@@ -43,14 +43,15 @@ async function serveStaticFiles(ctx: Koa.Context, next: Koa.Next) {
 }
 
 const apiRouter = new Router({prefix: '/api'})
-    .use(checkJsonContentType)
-    .use(bodyParser())
-    .get('/drivers', listLEDDrivers)
-    .post('/drivers', createLEDDriver)
-    .get('/layouts', listLayouts)
-    .post('/layouts', createLayout)
-		.get('/programs/test', testProgram)
-		.post('/programs/compile', compileProgram);
+	.use(checkJsonContentType)
+	.use(bodyParser())
+	.get('/drivers', listLEDDrivers)
+	.post('/drivers', createLEDDriver)
+	.get('/layouts', listLayouts)
+	.post('/layouts', createLayout)
+	.get('/programs', listPrograms)
+	.post('/programs', createProgram)
+	.post('/programs/compile', compileProgram);
 
 const app = new Koa()
     .use(apiRouter.routes())

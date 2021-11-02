@@ -22,7 +22,9 @@ function checkFilePath(filePath: string): string {
 	return normalizedPath;
 }
 
-export async function compile(files: {[filePath: string]: string}): Promise<Buffer> {
+export async function compile(files: {[filePath: string]: string})
+	: Promise<{wasm: Buffer, sourceMap: string}>
+{
 	const checkedFiles: { [filePath: string]: Buffer } = {};
 	for (const filePath in files) {
 		const checkedPath = checkFilePath(filePath);
@@ -38,8 +40,10 @@ export async function compile(files: {[filePath: string]: string}): Promise<Buff
 	}
 
 	let output = Buffer.alloc(0);
+	let sourceMap = '';
 	await tempy.directory.task(async (baseDirPath) => {
 		const srcDirPath = path.join(baseDirPath, 'src');
+		await fs.mkdir(srcDirPath);
 
 		for (const relativeFilePath in checkedFiles) {
 			const filePath = path.join(srcDirPath, relativeFilePath);
@@ -54,18 +58,19 @@ export async function compile(files: {[filePath: string]: string}): Promise<Buff
 			await fs.copyFile(srcPath, dstPath);
 		}
 
-		const outputPath = path.join(baseDirPath, "output.wasm");
+		const outputPath = path.join(baseDirPath, "main.wasm");
+		const sourceMapPath = path.join(baseDirPath, "main.wasm.map");
 		const args = [
-				"main.ts",
-				"--baseDir", srcDirPath,
-				"--binaryFile", outputPath,
-				"--optimize",
-			];
+			"main.ts",
+			"--baseDir", srcDirPath,
+			"--binaryFile", outputPath,
+			"--optimize",
+			"--sourceMap",
+		];
 		// Run in subprocess because of https://github.com/AssemblyScript/assemblyscript/issues/2112
 		const ascProc = childProcess.fork('./node_modules/.bin/asc', args, {
 			stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
 		});
-
 		let stderr = '';
 		assert(ascProc.stderr !== null, "fork was called with stderr piped to parent");
 		ascProc.stderr.on('data', (chunk) => stderr += chunk);
@@ -91,7 +96,8 @@ export async function compile(files: {[filePath: string]: string}): Promise<Buff
 		}
 
 		output = await fs.readFile(outputPath);
+		sourceMap = (await fs.readFile(sourceMapPath)).toString();
 	});
 
-	return output;
+	return {wasm: output, sourceMap};
 }
