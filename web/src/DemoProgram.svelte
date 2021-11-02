@@ -1,30 +1,31 @@
 <script lang="ts">
-  import axios from 'axios';
-	import {pixelLayout as layoutLib, Layout, PixelLayout} from 'ledbetter-common';
-	import {decodeBase64} from './util';
+	import axios from 'axios';
+	import {pixelLayout as layoutLib, Layout, PixelLayout, ProgramBrief} from 'ledbetter-common';
 	import Animation from './Animation.svelte';
+	import LayoutSelect from './LayoutSelect.svelte';
+	import ProgramSelect from './ProgramSelect.svelte';
 
-	let layouts: Layout[] = [];
-	let layoutId = '';
+	let layout: Layout | null = null;
+	let programBrief: ProgramBrief | null = null;
 	let pixelLayout: PixelLayout | null;
+
 	let running: boolean = false;
 	let programWasm: BufferSource | null = null;
 
-
-	async function loadLayouts(): Promise<void> {
-		const response = await axios.get('/api/layouts');
-		layouts = response.data;
+	async function fetchProgramWasm(programBrief: ProgramBrief | null) {
+		if (programBrief) {
+			const response = await axios.get(
+				`/api/programs/${programBrief.id}/main.wasm`,
+				{responseType: 'arraybuffer'},
+			);
+			programWasm = response.data;
+		} else {
+			programWasm = null;
+		}
 	}
 
-	async function loadPrograms(): Promise<void> {
-		const response = await axios.get('/api/programs/test');
-		programWasm = decodeBase64(response.data.wasm);
-	}
-
-	$: {
-		const layout = layouts.find((layout) => layout.id === layoutId);
-		pixelLayout = layout ? layoutLib.parseCode(layout.sourceCode) : null;
-	}
+	$: pixelLayout = layout ? layoutLib.parseCode(layout.sourceCode) : null;
+	$: fetchProgramWasm(programBrief);
 </script>
 
 <div class="container">
@@ -38,45 +39,8 @@
 		<Animation aspectRatio={1} layout={pixelLayout} {programWasm} {running} />
 	</div>
 	<div class="block">
-		{#await loadLayouts()}
-			<div class="select is-loading">
-				<select>
-					<option value="">Select layout</option>
-				</select>Result: 42
-			</div>
-		{:then _}
-			<div class="select">
-				<select bind:value={layoutId}>
-					<option value="">Select layout</option>
-					{#each layouts as layout}
-						<option value={layout.id}>{layout.name}</option>
-					{/each}
-				</select>
-			</div>
-		{:catch err}
-			<div class="notification is-danger">
-				{err}
-			</div>
-		{/await}
-
-		{#await loadPrograms()}
-			<div class="select is-loading">
-				<select>
-					<option value="">Select program</option>
-				</select>
-			</div>
-		{:then _}
-			<div class="select">
-				<select>
-					<option value="">Select program</option>
-					<option value="test" selected>Test</option>
-				</select>
-			</div>
-		{:catch err}
-			<div class="notification is-danger">
-				{err}
-			</div>
-		{/await}
+		<LayoutSelect bind:layout={layout} />
+		<ProgramSelect bind:program={programBrief} />
 
 		<button
 			class="button is-success is-light"

@@ -104,7 +104,6 @@ export async function createProgram(ctx: Koa.Context, next: Koa.Next): Promise<v
 	try {
 		await programsMod.create(program);
 	} catch (err) {
-		console.log(err);
 		if (err instanceof UniquenessError) {
 			ctx.status = 422;
 			ctx.body = {

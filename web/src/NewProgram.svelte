@@ -2,22 +2,22 @@
 	import Animation from './Animation.svelte';
 	import type {Layout, PixelLayout} from 'ledbetter-common';
 	import {useFocus, Link} from 'svelte-navigator';
-	import axios, {AxiosError} from "axios";
+	import axios, {AxiosError, AxiosResponse} from "axios";
 	import {pixelLayout as layoutLib} from "ledbetter-common";
-	import {decodeBase64} from './util.ts';
+	import {decodeBase64} from './util.js';
+	import LayoutSelect from './LayoutSelect.svelte';
 
 	const registerFocus = useFocus();
 	export let navigate;
 
-	let layouts: Layout[] = [];
-	let layoutId = '';
+	let layout: Layout | null = null;
+	let pixelLayout: PixelLayout | null;
 
 	let creating = false;
 	let name: string = '';
 	let nameInput: HTMLInputElement;
 	let bannerError: string | null = null;
 
-	let pixelLayout: PixelLayout | null  = null;
 	let running = false;
 	let programWasm: BufferSource | null = null;
 
@@ -37,18 +37,39 @@ export class PixelAnimation {
 	let programCodeError: string | null = null;
 
 	async function handleCreate() {
+		if (programWasm === null) {
+			return;
+		}
+		bannerError = null;
 
-	}
+		if (/^\s*$/.test(name)) {
+			nameInput.focus();
+			return;
+		}
 
-	async function loadLayouts(): Promise<void> {
-		const response = await axios.get('/api/layouts');
-		layouts = response.data;
+		creating = true;
+		try {
+			await axios.post('/api/programs', {name, sourceCode: {'PixelAnimation.ts': programCode}});
+		} catch (untypedErr) {
+			const err = untypedErr as AxiosError;
+			if (err.response.status === 422 &&
+				err.response.data instanceof Object &&
+				err.response.data.hasOwnProperty('error'))
+			{
+				let {error: errMessage} = err.response.data as {error: string};
+				bannerError = errMessage
+			}
+			creating = false;
+			return;
+		}
+
+		navigate('/demo');
 	}
 
 	async function compileProgram(): Promise<void> {
 		const files: {[fileName: string]: string} = {'PixelAnimation.ts': programCode};
 
-		let response;
+		let response: AxiosResponse;
 		try {
 			response = await axios.post('/api/programs/compile', {files});
 		} catch (untypedErr) {
@@ -66,10 +87,7 @@ export class PixelAnimation {
 		programCodeError = null;
 	}
 
-	$: {
-		const layout = layouts.find((layout) => layout.id === layoutId);
-		pixelLayout = layout ? layoutLib.parseCode(layout.sourceCode) : null;
-	}
+	$: pixelLayout = layout ? layoutLib.parseCode(layout.sourceCode) : null;
 
 	compileProgram();
 </script>
@@ -149,26 +167,7 @@ export class PixelAnimation {
 			</div>
 
 			<div class="block">
-				{#await loadLayouts()}
-					<div class="select is-loading">
-						<select>
-							<option value="">Select layout</option>
-						</select>Result: 42
-					</div>
-				{:then _}
-					<div class="select">
-						<select bind:value={layoutId}>
-							<option value="">Select layout</option>
-							{#each layouts as layout}
-								<option value={layout.id}>{layout.name}</option>
-							{/each}
-						</select>
-					</div>
-				{:catch err}
-					<div class="notification is-danger">
-						{err}
-					</div>
-				{/await}
+				<LayoutSelect bind:layout={layout} />
 
 				<button
 					class="button is-success is-light"
