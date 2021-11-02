@@ -1,3 +1,4 @@
+import tinycolor from 'tinycolor2';
 import type {PixelLayout} from 'ledbetter-common';
 
 export interface PixelVal {
@@ -84,8 +85,14 @@ export async function createWasmProgram(wasm: BufferSource, layout: PixelLayout)
 		env: {
 			abort(_msgRef: number, _fileNameRef: number, line: number, column: number) {
 				console.error("abort called at main.ts:" + line + ":" + column);
-			}
-		}
+			},
+		},
+		colorConvert: {
+			hsvToRgbEncoded(h: number, s: number, v: number): number {
+				const {r, g, b} = tinycolor({h, s, v}).toRgb();
+				return (b << 16) | (g << 8) | (r << 0);
+			},
+		},
 	});
 
 	return new WasmProgram(layout, instance, module);

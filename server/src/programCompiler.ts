@@ -57,7 +57,7 @@ export async function compile(files: {[filePath: string]: string}): Promise<Comp
 			await fs.writeFile(filePath, checkedFiles[relativeFilePath]);
 		}
 
-		for (const fileName of ['main.ts', 'mainTypes.ts']) {
+		for (const fileName of ['main.ts', 'mainTypes.ts', 'colorConvert.ts']) {
 			const srcPath = path.join('assemblyscript', fileName);
 			const dstPath = path.join(srcDirPath, fileName);
 			await fs.copyFile(srcPath, dstPath);
