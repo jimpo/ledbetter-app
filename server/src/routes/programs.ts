@@ -1,9 +1,8 @@
-import {version as ascVersion} from 'assemblyscript/cli/asc';
 import {randomUUID} from 'crypto';
 import Koa from 'koa';
 import Joi from "joi";
 
-import {compile} from '../programCompiler.js';
+import {CompilationResult, compile} from '../programCompiler.js';
 import {InvalidProgramSourcePathError, CompilationError, UniquenessError} from '../errors.js';
 import * as programsMod from '../programs.js';
 import type {Program} from '../programs.js';
@@ -19,6 +18,42 @@ export async function listPrograms(ctx: Koa.Context, next: Koa.Next): Promise<vo
 			ascVersion: program.ascVersion,
 		};
 	});
+	await next();
+}
+
+export async function getProgram(ctx: Koa.Context, next: Koa.Next): Promise<void> {
+	const program = await programsMod.get(ctx.params.id);
+	if (!program) {
+		return await next();
+	}
+
+	ctx.body = {
+		id: program.id,
+		name: program.name,
+		apiVersion: program.apiVersion,
+		ascVersion: program.ascVersion,
+		sourceCode: program.sourceCode,
+	};
+	await next();
+}
+
+export async function getProgramWasm(ctx: Koa.Context, next: Koa.Next): Promise<void> {
+	const program = await programsMod.get(ctx.params.id);
+	if (!program) {
+		return await next();
+	}
+
+	ctx.body = program.wasm;
+	await next();
+}
+
+export async function getProgramWasmSourceMap(ctx: Koa.Context, next: Koa.Next): Promise<void> {
+	const program = await programsMod.get(ctx.params.id);
+	if (!program) {
+		return await next();
+	}
+
+	ctx.body = program.wasmSourceMap;
 	await next();
 }
 
@@ -40,9 +75,9 @@ export async function createProgram(ctx: Koa.Context, next: Koa.Next): Promise<v
 
 	const sourceCode = body.sourceCode as {[filePath: string]: string};
 
-	let wasm: Buffer, sourceMap: string;
+	let result: CompilationResult;
 	try {
-		({wasm, sourceMap} = await compile(sourceCode));
+		result = await compile(sourceCode);
 	} catch (err) {
 		if (err instanceof CompilationError) {
 			ctx.status = 422;
@@ -60,10 +95,10 @@ export async function createProgram(ctx: Koa.Context, next: Koa.Next): Promise<v
 		id: randomUUID(),
 		name: body.name as string,
 		apiVersion: programsMod.API_VERSION_LATEST,
-		ascVersion,
+		ascVersion: result.ascVersion,
 		sourceCode,
-		wasm,
-		wasmSourceMap: sourceMap,
+		wasm: result.wasm,
+		wasmSourceMap: result.sourceMap,
 	};
 
 	try {
@@ -104,9 +139,9 @@ export async function compileProgram(ctx: Koa.Context, next: Koa.Next): Promise<
 		return await next();
 	}
 
-	let wasm: Buffer, sourceMap: string;
+	let result: CompilationResult;
 	try {
-		({wasm, sourceMap} = await compile(body.files as {[filePath: string]: string}));
+		result = await compile(body.files as {[filePath: string]: string});
 	} catch (err) {
 		if (err instanceof CompilationError) {
 			ctx.status = 422;
@@ -120,8 +155,8 @@ export async function compileProgram(ctx: Koa.Context, next: Koa.Next): Promise<
 		throw err;
 	}
 	ctx.body = {
-		wasm: wasm.toString('base64'),
-		sourceMap,
+		wasm: result.wasm.toString('base64'),
+		sourceMap: result.sourceMap,
 	};
 
 	return await next();

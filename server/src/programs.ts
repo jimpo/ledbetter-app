@@ -16,6 +16,12 @@ export interface Program {
 const LIST_LIMIT: number = 10;
 
 
+export async function get(id: string): Promise<Program | undefined> {
+	return await db<Program>('programs')
+		.where('id', id)
+		.first();
+}
+
 export async function list(): Promise<Program[]> {
 	return await db<Program>('programs')
 		.limit(LIST_LIMIT);

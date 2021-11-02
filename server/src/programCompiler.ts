@@ -1,3 +1,4 @@
+import {version as ascVersion} from 'assemblyscript/cli/asc';
 import assert from 'assert';
 import childProcess from 'child_process';
 import path from 'path';
@@ -6,6 +7,12 @@ import tempy from 'tempy';
 
 import {CompilationError, InvalidProgramSourcePathError} from './errors.js';
 
+
+export interface CompilationResult {
+	wasm: Buffer;
+	sourceMap: string;
+	ascVersion: string;
+}
 
 function checkFilePath(filePath: string): string {
 	const normalizedPath = path.normalize(filePath);
@@ -22,9 +29,7 @@ function checkFilePath(filePath: string): string {
 	return normalizedPath;
 }
 
-export async function compile(files: {[filePath: string]: string})
-	: Promise<{wasm: Buffer, sourceMap: string}>
-{
+export async function compile(files: {[filePath: string]: string}): Promise<CompilationResult> {
 	const checkedFiles: { [filePath: string]: Buffer } = {};
 	for (const filePath in files) {
 		const checkedPath = checkFilePath(filePath);
@@ -99,5 +104,9 @@ export async function compile(files: {[filePath: string]: string})
 		sourceMap = (await fs.readFile(sourceMapPath)).toString();
 	});
 
-	return {wasm: output, sourceMap};
+	return {
+		wasm: output,
+		sourceMap,
+		ascVersion,
+	};
 }

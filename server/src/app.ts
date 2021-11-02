@@ -6,7 +6,9 @@ import {isHttpError} from 'http-errors';
 
 import {listLEDDrivers, createLEDDriver} from './routes/drivers.js';
 import {listLayouts, createLayout} from './routes/layouts.js';
-import {listPrograms, compileProgram, createProgram} from './routes/programs.js';
+import {
+	listPrograms, compileProgram, createProgram, getProgram, getProgramWasm, getProgramWasmSourceMap,
+} from './routes/programs.js';
 
 async function checkJsonContentType(ctx: ExtendableContext, next: Koa.Next) {
     /// The === false is because null indicates no request body
@@ -50,6 +52,9 @@ const apiRouter = new Router({prefix: '/api'})
 	.get('/layouts', listLayouts)
 	.post('/layouts', createLayout)
 	.get('/programs', listPrograms)
+	.get('/programs/:id', getProgram)
+	.get('/programs/:id/main.wasm', getProgramWasm)
+	.get('/programs/:id/main.wasm.map', getProgramWasmSourceMap)
 	.post('/programs', createProgram)
 	.post('/programs/compile', compileProgram);
 
