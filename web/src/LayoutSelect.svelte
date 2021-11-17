@@ -1,38 +1,36 @@
 <script lang="ts">
 	import axios from 'axios';
+	import {Link} from 'svelte-navigator';
 	import type {Layout} from 'ledbetter-common';
+	import type {Option} from './types';
+	import FancySelect from './FancySelect.svelte';
 
 	export let layout: Layout | null;
 
-	let layoutId = '';
+	let selectedOption: Option | null = null;
 	let layouts: Layout[] = [];
 
-	async function loadLayouts(): Promise<void> {
-		const response = await axios.get('/api/layouts');
+	async function loadLayouts(searchQuery: string): Promise<void> {
+		const response = await axios.get('/api/layouts', {params: {autocomplete: searchQuery}});
 		layouts = response.data;
 	}
 
-	$: layout = layouts.find((layout) => layout.id === layoutId);
+	async function loadOptions(searchQuery: string): Promise<Option[]> {
+		await loadLayouts(searchQuery);
+		return layouts.map(({id, name}) => {
+			return {value: id, label: name};
+		});
+	}
+
+	$: layout = layouts.find((layout) => layout.id === selectedOption?.value);
 </script>
 
-{#await loadLayouts()}
-	<div class="select is-loading">
-		<select>
-			<option value="">Select layout</option>
-		</select>
-	</div>
-{:then _}
-	<div class="select">
-		<select bind:value={layoutId}>
-			<option value="">Select layout</option>
-			{#each layouts as layout}
-				<option value={layout.id}>{layout.name}</option>
-			{/each}
-		</select>
-	</div>
-{:catch err}
-	<div class="notification is-danger">
-		{err}
-	</div>
-{/await}
-
+<FancySelect
+	defaultLabel={'Select a layout'}
+	searchPlaceholder='Search layouts'
+	loadOptions={loadOptions}
+	bind:selected={selectedOption}
+>
+	<Link class="dropdown-item" to="/layouts/new">Create new layout</Link>
+	<hr class="dropdown-divider"/>
+</FancySelect>
