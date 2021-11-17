@@ -68,7 +68,7 @@ const reverseAuthResponseSchema = Joi.object({
 export type DriverStatus = 'NotPlaying' | 'Playing' | 'Paused';
 
 const driverStatusSchema = Joi.string()
-	.valid(['NotPlaying', 'Playing', 'Paused']);
+	.valid('NotPlaying', 'Playing', 'Paused');
 
 async function authenticateDriver(ws: WebSocket): Promise<DriverClient> {
 	const transport = new WebSocketConnectionTransport(ws);

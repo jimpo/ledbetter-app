@@ -1,13 +1,10 @@
+import {LEDDriver} from 'ledbetter-common';
+
 import {db} from './db.js';
 import {getConnectedDrivers} from './driverManager.js';
 
 const LIST_LIMIT: number = 10;
 
-export interface LEDDriver {
-    id: string,
-    name: string,
-    ipAddress: string,
-}
 
 export async function create(driver: LEDDriver): Promise<void> {
     return await db('ledDrivers').insert(driver);

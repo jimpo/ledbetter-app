@@ -4,7 +4,9 @@ import bodyParser from 'koa-bodyparser';
 import send from 'koa-send';
 import {isHttpError} from 'http-errors';
 
-import {listLEDDrivers, createLEDDriver} from './routes/drivers.js';
+import {
+	listLEDDrivers, createLEDDriver, runLEDDriver, playLEDDriver, pauseLEDDriver,
+} from './routes/drivers.js';
 import {listLayouts, createLayout} from './routes/layouts.js';
 import {
 	listPrograms, compileProgram, createProgram, getProgram, getProgramWasm, getProgramWasmSourceMap,
@@ -49,6 +51,9 @@ const apiRouter = new Router({prefix: '/api'})
 	.use(bodyParser())
 	.get('/drivers', listLEDDrivers)
 	.post('/drivers', createLEDDriver)
+	.post('/drivers/:id/run', runLEDDriver)
+	.post('/drivers/:id/play', playLEDDriver)
+	.post('/drivers/:id/pause', pauseLEDDriver)
 	.get('/layouts', listLayouts)
 	.post('/layouts', createLayout)
 	.get('/programs', listPrograms)
