@@ -11,6 +11,7 @@
 	import Landing from './Landing.svelte';
 	import NewLayout from './NewLayout.svelte';
 	import NewProgram from './NewProgram.svelte';
+	import ShowProgram from './ShowProgram.svelte';
 </script>
 
 <main class="section">
@@ -21,5 +22,6 @@
 		<Route path="drivers/" component={Drivers}/>
 		<Route path="layouts/new" component={NewLayout}/>
 		<Route path="programs/new" component={NewProgram}/>
+		<Route path="programs/:id" component={ShowProgram}/>
 	</Router>
 </main>

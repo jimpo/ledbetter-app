@@ -62,7 +62,7 @@ export async function createProgram(ctx: Koa.Context, next: Koa.Next): Promise<v
 		name: Joi.string()
 			.required(),
 		sourceCode: Joi.object()
-			.pattern(Joi.string(), Joi.string())
+			.pattern(Joi.string(), Joi.string().allow(''))
 			.required(),
 	});
 

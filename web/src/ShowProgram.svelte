@@ -13,7 +13,7 @@
 	let layout: Layout | null = null;
 	let pixelLayout: PixelLayout | null;
 
-	let creating = false;
+	let saving = false;
 	let name: string = '';
 	let nameInput: HTMLInputElement;
 	let bannerError: string | null = null;
@@ -21,55 +21,59 @@
 	let running = false;
 	let programWasm: BufferSource | null = null;
 
-	const SAMPLE_PROGRAM_CODE =
-		`import {Pixel} from './mainTypes';
+	let programCode = '';
 
-export class PixelAnimation {
-  constructor(private pixels: Pixel[][]) {
-  }
-
-  tick(): void {
-  }
-}
-`;
-
-	let programCode = SAMPLE_PROGRAM_CODE;
-
-	async function handleCreate() {
-		if (programWasm === null) {
-			return;
-		}
-		bannerError = null;
-
-		if (/^\s*$/.test(name)) {
-			nameInput.focus();
-			return;
-		}
-
-		creating = true;
-		try {
-			await axios.post('/api/programs', {name, sourceCode: {'PixelAnimation.ts': programCode}});
-		} catch (untypedErr) {
-			const err = untypedErr as AxiosError;
-			if (err.response.status === 422 &&
-				err.response.data instanceof Object &&
-				err.response.data.hasOwnProperty('error'))
-			{
-				let {error: errMessage} = err.response.data as {error: string};
-				bannerError = errMessage
-			}
-			creating = false;
-			return;
-		}
-
-		navigate('/demo');
+	async function handleSave() {
 	}
+	// async function handleCreate() {
+	// 	if (programWasm === null) {
+	// 		return;
+	// 	}
+	// 	bannerError = null;
+	//
+	// 	if (/^\s*$/.test(name)) {
+	// 		nameInput.focus();
+	// 		return;
+	// 	}
+	//
+	// 	creating = true;
+	// 	try {
+	// 		await axios.post('/api/programs', {name, sourceCode: {'PixelAnimation.ts': programCode}});
+	// 	} catch (untypedErr) {
+	// 		const err = untypedErr as AxiosError;
+	// 		if (err.response.status === 422 &&
+	// 			err.response.data instanceof Object &&
+	// 			err.response.data.hasOwnProperty('error'))
+	// 		{
+	// 			let {error: errMessage} = err.response.data as {error: string};
+	// 			bannerError = errMessage
+	// 		}
+	// 		creating = false;
+	// 		return;
+	// 	}
+	//
+	// 	navigate('/demo');
+	// }
 
 	$: pixelLayout = layout ? layoutLib.parseCode(layout.sourceCode) : null;
-
 </script>
 
 <style>
+	.program-code-edit {
+		font-family: monospace;
+	}
+	.program-code-edit.program-code-valid {
+		height: 640px;
+	}
+	.program-code-edit.program-code-invalid {
+		height: 320px;
+	}
+	.program-code-error {
+		height: 320px;
+		font-family: monospace;
+		background-color: #f5f5f5;
+	}
+
 	.action-buttons {
 		text-align: right;
 	}
@@ -93,29 +97,18 @@ export class PixelAnimation {
 	<div class="block">
 		<div class="columns">
 			<div class="column is-three-quarters">
-				{#if !creating}
-					<input
-						bind:this={nameInput}
-						bind:value={name}
-						use:registerFocus
-						class="input is-large"
-						type="text"
-						placeholder="Program name..."
-					/>
-				{:else}
-					<h1 class="title is-1">{name}</h1>
-				{/if}
+				<h1 class="title is-1">{name}</h1>
 			</div>
 			<div class="column action-buttons">
 				<button
-					class="button is-large is-primary is-outlined"
-					class:is-loading={creating}
-					title="Create"
+					class="button is-large is-outlined"
+					class:is-loading={saving}
+					title="Save"
 					disabled={programWasm === null ? true : null}
-					on:click|preventDefault={handleCreate}
+					on:click|preventDefault={handleSave}
 				>
           <span class="icon">
-            <i class="fas fa-check"></i>
+            <i class="fas fa-save"></i>
           </span>
 				</button>
 			</div>
@@ -151,7 +144,7 @@ export class PixelAnimation {
 			</div>
 		</div>
 		<div class="column">
-			<ProgramCodeEdit {programCode} bind:programWasm={programWasm} disabled={creating} />
+			<ProgramCodeEdit {programCode} bind:programWasm={programWasm} disabled={saving} />
 		</div>
 	</div>
 </div>
