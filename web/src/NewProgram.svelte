@@ -151,7 +151,7 @@ export class PixelAnimation {
 			</div>
 		</div>
 		<div class="column">
-			<ProgramCodeEdit {programCode} bind:programWasm={programWasm} disabled={creating} />
+			<ProgramCodeEdit bind:programCode bind:programWasm disabled={creating} />
 		</div>
 	</div>
 </div>

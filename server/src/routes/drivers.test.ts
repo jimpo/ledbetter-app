@@ -1,8 +1,8 @@
 import {randomUUID} from "crypto";
+import {LEDDriver} from 'ledbetter-common';
 import request from 'supertest';
 
 import app from '../app.js';
-import {LEDDriver} from '../drivers.js';
 import {db} from '../db.js';
 import {UUID_REGEX} from '../../test/util.js';
 

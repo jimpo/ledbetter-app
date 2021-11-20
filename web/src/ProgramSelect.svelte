@@ -32,6 +32,9 @@
 	loadOptions={loadOptions}
 	bind:selected={selectedOption}
 >
+	{#if program}
+	<Link class="dropdown-item" to={`/programs/${program.id}`}>Show Details</Link>
+	{/if}
 	<Link class="dropdown-item" to="/programs/new">Create new program</Link>
 	<hr class="dropdown-divider"/>
 </FancySelect>

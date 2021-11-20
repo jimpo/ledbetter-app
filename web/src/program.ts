@@ -86,6 +86,9 @@ export async function createWasmProgram(wasm: BufferSource, layout: PixelLayout)
 			abort(_msgRef: number, _fileNameRef: number, line: number, column: number) {
 				console.error("abort called at main.ts:" + line + ":" + column);
 			},
+			seed(): number {
+				return Math.random();
+			},
 		},
 		colorConvert: {
 			hsvToRgbEncoded(h: number, s: number, v: number): number {

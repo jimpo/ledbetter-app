@@ -1,14 +1,16 @@
 <script lang="ts">
 	import Animation from './Animation.svelte';
 	import type {Layout, PixelLayout} from 'ledbetter-common';
-	import {useFocus, Link} from 'svelte-navigator';
+	import {useFocus, useParams, Link} from 'svelte-navigator';
 	import axios, {AxiosError} from "axios";
 	import {pixelLayout as layoutLib} from "ledbetter-common";
 	import LayoutSelect from './LayoutSelect.svelte';
 	import ProgramCodeEdit from './ProgramCodeEdit.svelte';
 
 	const registerFocus = useFocus();
+	const params = useParams();
 	export let navigate;
+	const programId = $params.id;
 
 	let layout: Layout | null = null;
 	let pixelLayout: PixelLayout | null;
@@ -22,6 +24,12 @@
 	let programWasm: BufferSource | null = null;
 
 	let programCode = '';
+
+	async function loadProgram() {
+		const response = await axios.get(`/api/programs/${programId}`);
+		name = response.data.name;
+		programCode = response.data.sourceCode['PixelAnimation.ts'];
+	}
 
 	async function handleSave() {
 	}
@@ -55,6 +63,7 @@
 	// 	navigate('/demo');
 	// }
 
+	loadProgram();
 	$: pixelLayout = layout ? layoutLib.parseCode(layout.sourceCode) : null;
 </script>
 
@@ -80,13 +89,6 @@
 </style>
 
 <div class="container">
-	<nav class="breadcrumb" aria-label="breadcrumbs">
-		<ul>
-			<li><Link to="/programs">Programs</Link></li>
-			<li class="is-active"><a href="/programs/new" aria-current="page">New Program</a></li>
-		</ul>
-	</nav>
-
 	{#if bannerError}
 		<div class="notification is-danger">
 			<button class="delete" on:click|preventDefault={() => bannerError = null}></button>

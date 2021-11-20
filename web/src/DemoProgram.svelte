@@ -29,7 +29,16 @@
 	}
 
 	async function play() {
-		running = true;
+		if (programBrief) {
+			if (driver) {
+				const payload = {programId: programBrief.id};
+				const response = await axios.post(`/api/drivers/${driver.id}/run`, payload);
+				const {status}: {status: string} = response.data;
+				console.log(status);
+			} else {
+				running = true;
+			}
+		}
 	}
 
 	async function pause() {

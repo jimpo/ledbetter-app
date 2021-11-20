@@ -85,6 +85,12 @@ export class DriverClient {
 	constructor(private client: Client, public id: string, public name: string) {
 	}
 
+	async run(wasm: Buffer): Promise<DriverStatus> {
+		const params = {wasm: wasm.toString('base64')};
+		const response = await this.client.request({method: "run", params});
+		return Joi.attempt(response, driverStatusSchema);
+	}
+
 	async play(): Promise<DriverStatus> {
 		const response = await this.client.request({method: "play"});
 		return Joi.attempt(response, driverStatusSchema);

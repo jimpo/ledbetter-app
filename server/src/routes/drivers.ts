@@ -2,9 +2,10 @@ import {randomUUID} from 'crypto';
 import Koa from 'koa';
 import {RouterContext} from '@koa/router';
 import Joi from 'joi';
+import {LEDDriver} from 'ledbetter-common';
 
 import * as drivers from '../drivers.js';
-import {LEDDriver} from '../drivers.js';
+import * as programs from '../programs.js';
 import {getConnectedDrivers} from '../driverManager.js';
 
 export async function listLEDDrivers(ctx: RouterContext, next: Koa.Next) {
@@ -47,12 +48,35 @@ export async function createLEDDriver(ctx: RouterContext, next: Koa.Next) {
 }
 
 export async function runLEDDriver(ctx: RouterContext, next: Koa.Next) {
+	const requestSchema = Joi.object({
+		programId: Joi.string()
+			.uuid()
+			.required(),
+	});
+
+	const { value: body, error } = requestSchema.validate(ctx.request.body);
+	if (error) {
+		ctx.status = 422;
+		ctx.body = error.details;
+		return await next();
+	}
+
 	const connectedDrivers = getConnectedDrivers();
 	const driverClient = connectedDrivers.get(ctx.params.id);
-	if (driverClient) {
-		const status = await driverClient.play();
-		ctx.body = {status};
+	if (!driverClient) {
+		return await next();
 	}
+
+	const programId = body.programId as string;
+	const program = await programs.get(programId);
+	if (!program) {
+		ctx.status = 422;
+		ctx.body = {error: `No program found with id ${programId}`};
+		return await next();
+	}
+
+	const status = await driverClient.run(Buffer.from(program.wasm));
+	ctx.body = {status};
 	await next();
 }
 
