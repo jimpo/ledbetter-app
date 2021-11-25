@@ -12,4 +12,5 @@ const mySqlEnvConfig = {
 };
 
 export const development = mySqlEnvConfig;
+export const production = mySqlEnvConfig;
 export const test = mySqlEnvConfig;
