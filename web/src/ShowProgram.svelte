@@ -1,11 +1,12 @@
 <script lang="ts">
 	import Animation from './Animation.svelte';
-	import type {Layout, PixelLayout} from 'ledbetter-common';
+	import type {DriverStatus, Layout, PixelLayout} from 'ledbetter-common';
 	import {useFocus, useParams, Link} from 'svelte-navigator';
 	import axios, {AxiosError} from "axios";
 	import {pixelLayout as layoutLib} from "ledbetter-common";
 	import LayoutSelect from './LayoutSelect.svelte';
 	import ProgramCodeEdit from './ProgramCodeEdit.svelte';
+	import ControlButtons from "./ControlButtons.svelte";
 
 	const registerFocus = useFocus();
 	const params = useParams();
@@ -20,7 +21,7 @@
 	let nameInput: HTMLInputElement;
 	let bannerError: string | null = null;
 
-	let running = false;
+	let demoStatus: DriverStatus = 'NotPlaying';
 	let programWasm: BufferSource | null = null;
 
 	let programCode = '';
@@ -99,7 +100,7 @@
 	<div class="block">
 		<div class="columns">
 			<div class="column is-three-quarters">
-				<h1 class="title is-1">{name}</h1>
+				<h1 use:registerFocus class="title is-1">{name}</h1>
 			</div>
 			<div class="column action-buttons">
 				<button
@@ -120,29 +121,18 @@
 	<div class="columns">
 		<div class="column is-three-quarters">
 			<div class="block">
-				<Animation aspectRatio={1} layout={pixelLayout} {programWasm} {running} />
+				<Animation aspectRatio={1} layout={pixelLayout} {programWasm} status={demoStatus} />
 			</div>
 
 			<div class="block">
 				<LayoutSelect bind:layout={layout} />
-
-				<button
-					class="button is-success is-light"
-					on:click|preventDefault={() => running = true}
-					disabled={programWasm === null || running ? true : null}>
-					<span class="icon">
-						<i class="fas fa-play"></i>
-					</span>
-				</button>
-
-				<button
-					class="button is-danger is-light"
-					on:click|preventDefault={() => running = false}
-					disabled={programWasm === null || !running ? true : null}>
-					<span class="icon">
-						<i class="fas fa-stop"></i>
-					</span>
-				</button>
+				<ControlButtons
+					ready={programWasm !== null && layout !== null}
+					status={demoStatus}
+					onPlay={async () => { demoStatus = 'Playing' }}
+					onPause={async () => { demoStatus = 'Paused' }}
+					onStop={async () => { demoStatus = 'NotPlaying' }}
+				/>
 			</div>
 		</div>
 		<div class="column">

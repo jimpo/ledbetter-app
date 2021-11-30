@@ -1,19 +1,23 @@
 <script lang="ts">
-	import axios from 'axios';
+	import axios, {AxiosResponse} from 'axios';
 	import {
-		pixelLayout as layoutLib, Layout, PixelLayout, ProgramBrief, LEDDriver,
+		pixelLayout as layoutLib, Layout, PixelLayout, ProgramBrief, LEDDriver, DriverStatus,
 	} from 'ledbetter-common';
+	import {useFocus, Link} from 'svelte-navigator';
 	import Animation from './Animation.svelte';
 	import LayoutSelect from './LayoutSelect.svelte';
 	import ProgramSelect from './ProgramSelect.svelte';
 	import DriverSelect from './DriverSelect.svelte';
+	import ControlButtons from "./ControlButtons.svelte";
+
+	const registerFocus = useFocus();
 
 	let layout: Layout | null = null;
 	let driver: LEDDriver | null = null;
 	let programBrief: ProgramBrief | null = null;
 	let pixelLayout: PixelLayout | null;
+	let driverStatus: DriverStatus = 'NotPlaying';
 
-	let running: boolean = false;
 	let programWasm: BufferSource | null = null;
 
 	async function fetchProgramWasm(programBrief: ProgramBrief | null) {
@@ -29,20 +33,50 @@
 	}
 
 	async function play() {
-		if (programBrief) {
-			if (driver) {
+		if (!programBrief) {
+			return;
+		}
+
+		if (driver) {
+			let response: AxiosResponse;
+			if (driverStatus === 'Paused') {
+				response = await axios.post(`/api/drivers/${driver.id}/unpause`);
+			} else if (programBrief) {
 				const payload = {programId: programBrief.id};
-				const response = await axios.post(`/api/drivers/${driver.id}/run`, payload);
-				const {status}: {status: string} = response.data;
-				console.log(status);
+				response = await axios.post(`/api/drivers/${driver.id}/run`, payload);
 			} else {
-				running = true;
+				console.error('Play button pressed and unable to play');
+				return;
 			}
+			const {status}: {status: DriverStatus} = response.data;
+			driverStatus = status;
+		} else {
+			driverStatus = 'Playing';
 		}
 	}
 
 	async function pause() {
-		running = false;
+		if (driver) {
+			const response = await axios.post(`/api/drivers/${driver.id}/pause`);
+			const {status}: {status: DriverStatus} = response.data;
+			driverStatus = status;
+		} else {
+			driverStatus = 'Paused';
+		}
+	}
+
+	async function stop() {
+		if (!programBrief) {
+			return;
+		}
+
+		if (driver) {
+			const response = await axios.post(`/api/drivers/${driver.id}/stop`);
+			const {status}: {status: DriverStatus} = response.data;
+			driverStatus = status;
+		} else {
+			driverStatus = 'NotPlaying';
+		}
 	}
 
 	$: pixelLayout = layout ? layoutLib.parseCode(layout.sourceCode) : null;
@@ -50,14 +84,12 @@
 </script>
 
 <div class="container">
-	<nav class="breadcrumb" aria-label="breadcrumbs">
-		<ul>
-			<li class="is-active"><a href="/demo" aria-current="page">Demo Program</a></li>
-		</ul>
+	<nav use:registerFocus>
+		<h1 class="title">LEDBetter Lights</h1>
 	</nav>
 
 	<div class="block">
-		<Animation aspectRatio={1} layout={pixelLayout} {programWasm} {running} />
+		<Animation aspectRatio={1} layout={pixelLayout} {programWasm} status={driverStatus} />
 	</div>
 	<div class="block">
 		<div class="columns">
@@ -71,23 +103,13 @@
 				<ProgramSelect bind:program={programBrief} />
 			</div>
 			<div class="column">
-				<button
-					class="button is-success is-light"
-					on:click|preventDefault={play}
-					disabled={programWasm === null || running ? true : null}>
-					<span class="icon">
-						<i class="fas fa-play"></i>
-					</span>
-				</button>
-
-				<button
-					class="button is-danger is-light"
-					on:click|preventDefault={pause}
-					disabled={programWasm === null || !running ? true : null}>
-					<span class="icon">
-						<i class="fas fa-stop"></i>
-					</span>
-				</button>
+				<ControlButtons
+					ready={programWasm !== null && layout !== null}
+					status={driverStatus}
+					onPlay={play}
+					onPause={pause}
+					onStop={stop}
+				/>
 			</div>
 		</div>
 	</div>

@@ -3,3 +3,6 @@ export interface LEDDriver {
 	name: string,
 	ipAddress: string,
 }
+
+export type DriverStatus = 'NotPlaying' | 'Playing' | 'Paused';
+

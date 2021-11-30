@@ -1,3 +1,4 @@
+import type {DriverStatus} from 'ledbetter-common';
 import {IncomingMessage} from 'http';
 import {RawData, WebSocket} from 'ws';
 import {Client, RequestManager, JSONRPCError} from '@open-rpc/client-js';
@@ -64,8 +65,6 @@ const reverseAuthResponseSchema = Joi.object({
 	name: Joi.string()
 		.required(),
 });
-
-export type DriverStatus = 'NotPlaying' | 'Playing' | 'Paused';
 
 const driverStatusSchema = Joi.string()
 	.valid('NotPlaying', 'Playing', 'Paused');

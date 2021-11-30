@@ -23,7 +23,7 @@
 		});
 	}
 
-	$: program = programs.find((program) => program.id === selectedOption?.value);
+	$: program = programs.find((program) => program.id === selectedOption?.value) || null;
 </script>
 
 <FancySelect

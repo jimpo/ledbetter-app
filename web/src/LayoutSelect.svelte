@@ -22,7 +22,7 @@
 		});
 	}
 
-	$: layout = layouts.find((layout) => layout.id === selectedOption?.value);
+	$: layout = layouts.find((layout) => layout.id === selectedOption?.value) || null;
 </script>
 
 <FancySelect

@@ -3,9 +3,10 @@
 	import type {Layout, PixelLayout} from 'ledbetter-common';
 	import {useFocus, Link} from 'svelte-navigator';
 	import axios, {AxiosError} from "axios";
-	import {pixelLayout as layoutLib} from "ledbetter-common";
+	import {DriverStatus, pixelLayout as layoutLib} from "ledbetter-common";
 	import LayoutSelect from './LayoutSelect.svelte';
 	import ProgramCodeEdit from './ProgramCodeEdit.svelte';
+	import ControlButtons from "./ControlButtons.svelte";
 
 	const registerFocus = useFocus();
 	export let navigate;
@@ -18,7 +19,7 @@
 	let nameInput: HTMLInputElement;
 	let bannerError: string | null = null;
 
-	let running = false;
+	let demoStatus: DriverStatus = 'NotPlaying';
 	let programWasm: BufferSource | null = null;
 
 	const SAMPLE_PROGRAM_CODE =
@@ -66,7 +67,6 @@ export class PixelAnimation {
 	}
 
 	$: pixelLayout = layout ? layoutLib.parseCode(layout.sourceCode) : null;
-
 </script>
 
 <style>
@@ -125,29 +125,18 @@ export class PixelAnimation {
 	<div class="columns">
 		<div class="column is-three-quarters">
 			<div class="block">
-				<Animation aspectRatio={1} layout={pixelLayout} {programWasm} {running} />
+				<Animation aspectRatio={1} layout={pixelLayout} {programWasm} status={demoStatus} />
 			</div>
 
 			<div class="block">
 				<LayoutSelect bind:layout={layout} />
-
-				<button
-					class="button is-success is-light"
-					on:click|preventDefault={() => running = true}
-					disabled={programWasm === null || running ? true : null}>
-					<span class="icon">
-						<i class="fas fa-play"></i>
-					</span>
-				</button>
-
-				<button
-					class="button is-danger is-light"
-					on:click|preventDefault={() => running = false}
-					disabled={programWasm === null || !running ? true : null}>
-					<span class="icon">
-						<i class="fas fa-stop"></i>
-					</span>
-				</button>
+				<ControlButtons
+					ready={programWasm !== null && layout !== null}
+					status={demoStatus}
+					onPlay={async () => { demoStatus = 'Playing' }}
+					onPause={async () => { demoStatus = 'Paused' }}
+					onStop={async () => { demoStatus = 'NotPlaying' }}
+				/>
 			</div>
 		</div>
 		<div class="column">

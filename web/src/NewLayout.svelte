@@ -91,8 +91,8 @@ SEGMENT 150 pixels
 <div class="container">
 	<nav class="breadcrumb" aria-label="breadcrumbs">
 		<ul>
-			<li><Link to="/layouts">Layouts</Link></li>
-			<li class="is-active"><a href="/layouts/new" aria-current="page">New Layout</a></li>
+			<li><Link to="/">LEDBetter Lights</Link></li>
+			<li class="is-active"><Link to="/layouts/new" aria-current="page">New Layout</Link></li>
 		</ul>
 	</nav>
 

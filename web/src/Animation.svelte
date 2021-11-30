@@ -1,21 +1,27 @@
 <script lang="ts">
 	import type {Program, PixelVal} from './program';
 	import {createWasmProgram, TrivialProgram} from './program';
-	import {PixelLayout} from 'ledbetter-common';
+	import {DriverStatus, PixelLayout} from 'ledbetter-common';
 
 	export let aspectRatio: number = 1;
 	export let layout: PixelLayout | null = null;
 	export let programWasm: BufferSource | null = null;
-	export let running: boolean = false;
+	export let status: DriverStatus = 'NotPlaying';
 
-	let program: Program;
+	let program: Program | null = null;
+	let stoppedProgram: Program;
+
+	$: stoppedProgram = new TrivialProgram(layout || new PixelLayout([]));
 
 	$: {
-		program = new TrivialProgram(layout || new PixelLayout([]));
-		if (programWasm && layout) {
-			(async () => {
-				program = await createWasmProgram(programWasm, layout);
-			})();
+		if (status == 'NotPlaying') {
+			program = null;
+		} else if (program === null) {
+			if (programWasm && layout) {
+				(async () => {
+					program = await createWasmProgram(programWasm, layout);
+				})();
+			}
 		}
 	}
 
@@ -58,21 +64,28 @@
 	}
 
 	let pixelColors: PixelVal[][];
-	$: pixelColors = program.render();
 
 	let intervalId: number | null = null;
 	$: {
-		if (running && intervalId === null) {
+		if (status == 'Playing' && intervalId === null) {
 			intervalId = window.setInterval(
 				() => {
-					program.tick();
-					pixelColors = program.render();
+					if (program) {
+						program.tick();
+						pixelColors = program.render();
+					}
 				},
 				100
 			);
-		} else if (!running && intervalId !== null) {
+		} else if (status !== 'Playing' && intervalId !== null) {
 			window.clearInterval(intervalId);
 			intervalId = null;
+		}
+	}
+
+	$: {
+		if (intervalId === null && status == 'NotPlaying') {
+			pixelColors = stoppedProgram.render();
 		}
 	}
 
