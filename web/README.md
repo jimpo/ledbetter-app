@@ -1,2 +1,1 @@
-WebAssembly Studio project base `https://webassembly.studio/?f=m416iuivfya`
-`https://webassembly.studio/?f=sllms3ucvtd`
+WebAssembly Studio project base `https://webassembly.studio/?f=nj2wp6rsmf`

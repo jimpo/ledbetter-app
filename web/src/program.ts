@@ -22,9 +22,7 @@ export interface Program {
 
 export class WasmProgram {
 	private readonly _tick: () => void;
-	private readonly _getPixelRed: (stripIdx: number, pixelIdx: number) => number;
-	private readonly _getPixelGrn: (stripIdx: number, pixelIdx: number) => number;
-	private readonly _getPixelBlu: (stripIdx: number, pixelIdx: number) => number;
+	private readonly _getPixelVal: (stripIdx: number, pixelIdx: number) => number;
 	private readonly _pixels: PixelVal[][];
 
 	constructor(
@@ -32,13 +30,10 @@ export class WasmProgram {
 		instance: WebAssembly.Instance,
 		_module: WebAssembly.Module,
 	) {
-		// TODO: Validate module
+		// TODO: Validate module function signatures
+
 		this._tick = getExportedFunction(instance, 'tick') as () => void;
-		this._getPixelRed = getExportedFunction(instance, 'getPixelRed') as
-			(stripIdx: number, pixelIdx: number) => number;
-		this._getPixelGrn = getExportedFunction(instance, 'getPixelGrn') as
-			(stripIdx: number, pixelIdx: number) => number;
-		this._getPixelBlu = getExportedFunction(instance, 'getPixelBlu') as
+		this._getPixelVal = getExportedFunction(instance, 'getPixelVal') as
 			(stripIdx: number, pixelIdx: number) => number;
 
 		this._pixels = trivialPixelValArray(layout);
@@ -70,10 +65,12 @@ export class WasmProgram {
 	render(): PixelVal[][] {
 		for (let i = 0; i < this._pixels.length; i++) {
 			for (let j = 0; j < this._pixels[i].length; j++) {
-				const pixelVal = this._pixels[i][j];
-				pixelVal.red = this._getPixelRed(i, j);
-				pixelVal.grn = this._getPixelGrn(i, j);
-				pixelVal.blu = this._getPixelBlu(i, j);
+				const encodedRgb = this._getPixelVal(i, j);
+				this._pixels[i][j] = {
+					red: (encodedRgb >> 16) & 0xFF,
+					grn: (encodedRgb >> 8) & 0xFF,
+					blu: (encodedRgb >> 0) & 0xFF,
+				};
 			}
 		}
 		return this._pixels;
@@ -93,7 +90,7 @@ export async function createWasmProgram(wasm: BufferSource, layout: PixelLayout)
 		colorConvert: {
 			hsvToRgbEncoded(h: number, s: number, v: number): number {
 				const {r, g, b} = tinycolor({h, s, v}).toRgb();
-				return (b << 16) | (g << 8) | (r << 0);
+				return (r << 16) | (g << 8) | (b << 0);
 			},
 		},
 	});

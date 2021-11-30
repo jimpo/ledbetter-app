@@ -1,5 +1,5 @@
 import {PixelAnimation} from './PixelAnimation';
-import {Pixel} from './mainTypes';
+import {Pixel, pixelValToU32} from './mainTypes';
 
 let pixels: Pixel[][];
 let animation: PixelAnimation;
@@ -15,7 +15,7 @@ export function initLayoutSetStripLen(stripIdx: i32, length: i32): void {
 	pixels[stripIdx] = new Array(length);
 	for (let i = 0; i < length; i++) {
 		pixels[stripIdx][i] = {
-			val: {red: 255, grn: 255, blu: 255},
+			val: {red: 0, grn: 0, blu: 0},
 			loc: {x: 0.0, y: 0.0},
 		};
 	}
@@ -33,14 +33,6 @@ export function tick(): void {
 	animation.tick();
 }
 
-export function getPixelRed(stripIdx: i32, pixelIdx: i32): u8 {
-	return pixels[stripIdx][pixelIdx].val.red;
-}
-
-export function getPixelGrn(stripIdx: i32, pixelIdx: i32): u8 {
-	return pixels[stripIdx][pixelIdx].val.grn;
-}
-
-export function getPixelBlu(stripIdx: i32, pixelIdx: i32): u8 {
-	return pixels[stripIdx][pixelIdx].val.blu;
+export function getPixelVal(stripIdx: i32, pixelIdx: i32): u32 {
+	return pixelValToU32(pixels[stripIdx][pixelIdx].val);
 }
