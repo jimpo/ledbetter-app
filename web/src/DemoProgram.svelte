@@ -84,9 +84,9 @@
 </script>
 
 <div class="container">
-	<nav use:registerFocus>
-		<h1 class="title">LEDBetter Lights</h1>
-	</nav>
+	<div class="block">
+		<h1  use:registerFocus class="title">LEDBetter Lights</h1>
+	</div>
 
 	<div class="block">
 		<Animation aspectRatio={1} layout={pixelLayout} {programWasm} status={driverStatus} />

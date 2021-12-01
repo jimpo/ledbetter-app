@@ -49,24 +49,29 @@
 		height: 320px;
 	}
 	.program-code-error {
-	  height: 320px;
+		height: 100%;
 	  font-family: monospace;
 	  background-color: #f5f5f5;
   }
 </style>
 
-<textarea
-	class="textarea has-fixed-size program-code-edit"
-	class:program-code-valid={programCodeError === null}
-	class:program-code-invalid={programCodeError !== null}
-	bind:value={programCode}
-	on:focusout={compileProgram}
-	{disabled}
-/>
-{#if programCodeError !== null}
-  <textarea
-		class="textarea program-code-error has-fixed-size is-danger"
-		readonly>
-  {programCodeError}
-  </textarea>
-{/if}
+<div class="columns">
+	<div class="column" class:is-two-thirds={programCodeError !== null}>
+		<textarea
+			class="textarea program-code-edit"
+			bind:value={programCode}
+			on:focusout={compileProgram}
+			{disabled}
+		/>
+	</div>
+	{#if programCodeError !== null}
+		<div class="column">
+			<textarea
+				class="textarea program-code-error has-fixed-size is-danger"
+				readonly
+			>
+  			{programCodeError}
+  		</textarea>
+		</div>
+	{/if}
+</div>

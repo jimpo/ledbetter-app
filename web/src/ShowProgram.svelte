@@ -69,27 +69,34 @@
 </script>
 
 <style>
-	.program-code-edit {
-		font-family: monospace;
-	}
-	.program-code-edit.program-code-valid {
-		height: 640px;
-	}
-	.program-code-edit.program-code-invalid {
-		height: 320px;
-	}
-	.program-code-error {
-		height: 320px;
-		font-family: monospace;
-		background-color: #f5f5f5;
-	}
-
 	.action-buttons {
-		text-align: right;
+		float: right;
 	}
 </style>
 
 <div class="container">
+	<div class="action-buttons">
+		<button
+			class="button is-small is-outlined"
+			class:is-loading={saving}
+			title="Save"
+			disabled={programWasm === null}
+			on:click|preventDefault={handleSave}
+		>
+			<span class="icon">
+				<i class="fas fa-save"></i>
+			</span>
+		</button>
+	</div>
+
+	<nav class="breadcrumb is-medium" aria-label="breadcrumbs">
+		<ul>
+			<li><Link to="/">LEDBetter Lights</Link></li>
+			<li><a href="#">Programs</a></li>
+			<li class="is-active"><Link to="" aria-current="page">{name}</Link></li>
+		</ul>
+	</nav>
+
 	{#if bannerError}
 		<div class="notification is-danger">
 			<button class="delete" on:click|preventDefault={() => bannerError = null}></button>
@@ -98,45 +105,37 @@
 	{/if}
 
 	<div class="block">
-		<div class="columns">
-			<div class="column is-three-quarters">
-				<h1 use:registerFocus class="title is-1">{name}</h1>
-			</div>
-			<div class="column action-buttons">
-				<button
-					class="button is-large is-outlined"
-					class:is-loading={saving}
-					title="Save"
-					disabled={programWasm === null ? true : null}
-					on:click|preventDefault={handleSave}
-				>
-          <span class="icon">
-            <i class="fas fa-save"></i>
-          </span>
-				</button>
-			</div>
-		</div>
+		<input
+			bind:this={nameInput}
+			bind:value={name}
+			use:registerFocus
+			disabled={saving}
+			class="input is-large"
+			type="text"
+			placeholder="Program name..."
+		/>
+	</div>
+
+	<div class="block">
+		<ProgramCodeEdit {programCode} bind:programWasm={programWasm} disabled={saving} />
+	</div>
+
+	<div class="block">
+		<Animation aspectRatio={1} layout={pixelLayout} {programWasm} status={demoStatus} />
 	</div>
 
 	<div class="columns">
-		<div class="column is-three-quarters">
-			<div class="block">
-				<Animation aspectRatio={1} layout={pixelLayout} {programWasm} status={demoStatus} />
-			</div>
-
-			<div class="block">
-				<LayoutSelect bind:layout={layout} />
-				<ControlButtons
-					ready={programWasm !== null && layout !== null}
-					status={demoStatus}
-					onPlay={async () => { demoStatus = 'Playing' }}
-					onPause={async () => { demoStatus = 'Paused' }}
-					onStop={async () => { demoStatus = 'NotPlaying' }}
-				/>
-			</div>
+		<div class="column is-one-quarter">
+			<LayoutSelect bind:layout={layout} />
 		</div>
 		<div class="column">
-			<ProgramCodeEdit {programCode} bind:programWasm={programWasm} disabled={saving} />
+			<ControlButtons
+				ready={programWasm !== null && layout !== null}
+				status={demoStatus}
+				onPlay={async () => { demoStatus = 'Playing' }}
+				onPause={async () => { demoStatus = 'Paused' }}
+				onStop={async () => { demoStatus = 'NotPlaying' }}
+			/>
 		</div>
 	</div>
 </div>
