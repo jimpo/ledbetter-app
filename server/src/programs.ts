@@ -45,3 +45,10 @@ export async function create(program: Program): Promise<void> {
 		throw err;
 	}
 }
+
+export async function destroy(id: string): Promise<boolean> {
+	const nRows = await db('programs')
+		.where('id', id)
+		.del();
+	return nRows !== 0;
+}

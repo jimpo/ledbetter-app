@@ -2,10 +2,9 @@
 	import axios, {AxiosError} from 'axios';
 	import Animation from './Animation.svelte';
 	import {pixelLayout, PixelLayout} from 'ledbetter-common';
-	import {useFocus, Link} from 'svelte-navigator';
+	import {useFocus, Link, navigate} from 'svelte-navigator';
 
 	const registerFocus = useFocus();
-	export let navigate;
 
 	const SAMPLE_LAYOUT_CODE =
 		`SET PIXELS_PER_METER 60

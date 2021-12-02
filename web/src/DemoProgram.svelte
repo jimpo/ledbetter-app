@@ -1,9 +1,9 @@
 <script lang="ts">
-	import axios, {AxiosResponse} from 'axios';
+	import axios from 'axios';
 	import {
 		pixelLayout as layoutLib, Layout, PixelLayout, ProgramBrief, LEDDriver, DriverStatus,
 	} from 'ledbetter-common';
-	import {useFocus, Link} from 'svelte-navigator';
+	import {useFocus} from 'svelte-navigator';
 	import Animation from './Animation.svelte';
 	import LayoutSelect from './LayoutSelect.svelte';
 	import ProgramSelect from './ProgramSelect.svelte';
@@ -32,53 +32,6 @@
 		}
 	}
 
-	async function play() {
-		if (!programBrief) {
-			return;
-		}
-
-		if (driver) {
-			let response: AxiosResponse;
-			if (driverStatus === 'Paused') {
-				response = await axios.post(`/api/drivers/${driver.id}/unpause`);
-			} else if (programBrief) {
-				const payload = {programId: programBrief.id};
-				response = await axios.post(`/api/drivers/${driver.id}/run`, payload);
-			} else {
-				console.error('Play button pressed and unable to play');
-				return;
-			}
-			const {status}: {status: DriverStatus} = response.data;
-			driverStatus = status;
-		} else {
-			driverStatus = 'Playing';
-		}
-	}
-
-	async function pause() {
-		if (driver) {
-			const response = await axios.post(`/api/drivers/${driver.id}/pause`);
-			const {status}: {status: DriverStatus} = response.data;
-			driverStatus = status;
-		} else {
-			driverStatus = 'Paused';
-		}
-	}
-
-	async function stop() {
-		if (!programBrief) {
-			return;
-		}
-
-		if (driver) {
-			const response = await axios.post(`/api/drivers/${driver.id}/stop`);
-			const {status}: {status: DriverStatus} = response.data;
-			driverStatus = status;
-		} else {
-			driverStatus = 'NotPlaying';
-		}
-	}
-
 	$: pixelLayout = layout ? layoutLib.parseCode(layout.sourceCode) : null;
 	$: fetchProgramWasm(programBrief);
 </script>
@@ -89,12 +42,20 @@
 	</div>
 
 	<div class="block">
-		<Animation aspectRatio={1} layout={pixelLayout} {programWasm} status={driverStatus} />
+		<Animation
+			aspectRatio={1}
+			layout={pixelLayout}
+			{programWasm}
+			status={driver == null ? driverStatus : 'NotPlaying'}
+		/>
 	</div>
 	<div class="block">
 		<div class="columns">
 			<div class="column">
-				<DriverSelect bind:selected={driver} />
+				<DriverSelect
+					bind:selected={driver}
+					on:select={({detail: selected}) => driverStatus = selected?.status || 'NotPlaying'}
+				/>
 			</div>
 			<div class="column">
 				<LayoutSelect bind:layout={layout} />
@@ -104,11 +65,10 @@
 			</div>
 			<div class="column">
 				<ControlButtons
-					ready={programWasm !== null && layout !== null}
-					status={driverStatus}
-					onPlay={play}
-					onPause={pause}
-					onStop={stop}
+					bind:status={driverStatus}
+					ready={programWasm !== null && (driver !== null || layout !== null)}
+					driverId={driver?.id}
+					runPayload={programBrief ? {programId: programBrief.id} : null}
 				/>
 			</div>
 		</div>

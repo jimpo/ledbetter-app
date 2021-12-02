@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Animation from './Animation.svelte';
 	import type {Layout, PixelLayout} from 'ledbetter-common';
-	import {useFocus, Link} from 'svelte-navigator';
+	import {useFocus, Link, navigate} from 'svelte-navigator';
 	import axios, {AxiosError} from "axios";
 	import {DriverStatus, pixelLayout as layoutLib} from "ledbetter-common";
 	import LayoutSelect from './LayoutSelect.svelte';
@@ -9,7 +9,6 @@
 	import ControlButtons from "./ControlButtons.svelte";
 
 	const registerFocus = useFocus();
-	export let navigate;
 
 	let layout: Layout | null = null;
 	let pixelLayout: PixelLayout | null;
@@ -63,7 +62,7 @@ export class PixelAnimation {
 			return;
 		}
 
-		navigate('/demo');
+		navigate('/');
 	}
 
 	$: pixelLayout = layout ? layoutLib.parseCode(layout.sourceCode) : null;
@@ -93,7 +92,7 @@ export class PixelAnimation {
 	<nav class="breadcrumb is-medium" aria-label="breadcrumbs">
 		<ul>
 			<li><Link to="/">LEDBetter Lights</Link></li>
-			<li><a href="#">Programs</a></li>
+			<li class="is-active"><Link to="">Programs</Link></li>
 			<li class="is-active"><Link to="" aria-current="page">New</Link></li>
 		</ul>
 	</nav>
@@ -131,11 +130,8 @@ export class PixelAnimation {
 		</div>
 		<div class="column">
 			<ControlButtons
+				bind:status={demoStatus}
 				ready={programWasm !== null && layout !== null}
-				status={demoStatus}
-				onPlay={async () => { demoStatus = 'Playing' }}
-				onPause={async () => { demoStatus = 'Paused' }}
-				onStop={async () => { demoStatus = 'NotPlaying' }}
 			/>
 		</div>
 	</div>

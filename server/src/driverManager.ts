@@ -74,30 +74,50 @@ async function authenticateDriver(ws: WebSocket): Promise<DriverClient> {
 	const client = new Client(new RequestManager([transport]));
 
 	const challenge = '';
-	const response = await client.request({method: "reverse_auth", params: {challenge}});
-	let {name} = Joi.attempt(response, reverseAuthResponseSchema);
-	let id = randomUUID();
-	return new DriverClient(client, id, name);
+	const reverseAuthResp = await client.request({method: "reverse_auth", params: {challenge}});
+	const {name} = Joi.attempt(reverseAuthResp, reverseAuthResponseSchema);
+	const id = randomUUID();
+	const driverClient = new DriverClient(client, id, name);
+	await driverClient.updateStatus();
+	return driverClient;
 }
 
 export class DriverClient {
+	public status: DriverStatus;
+
 	constructor(private client: Client, public id: string, public name: string) {
+		this.status = 'NotPlaying';
+	}
+
+	async updateStatus(): Promise<DriverStatus> {
+		const response = await this.client.request({method: "get_status"});
+		return this.handleStatusResponse(response);
 	}
 
 	async run(wasm: Buffer): Promise<DriverStatus> {
 		const params = {wasm: wasm.toString('base64')};
 		const response = await this.client.request({method: "run", params});
-		return Joi.attempt(response, driverStatusSchema);
+		return this.handleStatusResponse(response);
 	}
 
 	async play(): Promise<DriverStatus> {
 		const response = await this.client.request({method: "play"});
-		return Joi.attempt(response, driverStatusSchema);
+		return this.handleStatusResponse(response);
 	}
 
 	async pause(): Promise<DriverStatus> {
 		const response = await this.client.request({method: "pause"});
-		return Joi.attempt(response, driverStatusSchema);
+		return this.handleStatusResponse(response);
+	}
+
+	async stop(): Promise<DriverStatus> {
+		const response = await this.client.request({method: "stop"});
+		return this.handleStatusResponse(response);
+	}
+
+	handleStatusResponse(response: any): DriverStatus {
+		this.status = Joi.attempt(response, driverStatusSchema);
+		return this.status;
 	}
 }
 

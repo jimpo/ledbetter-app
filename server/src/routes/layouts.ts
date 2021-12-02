@@ -34,7 +34,6 @@ export async function createLayout(ctx: Context, next: Koa.Next) {
 	try {
 		await layouts.create(layout);
 	} catch (err) {
-		console.log(err);
 		if (err instanceof UniquenessError) {
 			ctx.status = 422;
 			ctx.body = {

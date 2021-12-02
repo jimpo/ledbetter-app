@@ -7,30 +7,36 @@
 
 	export let program: ProgramBrief | null;
 
-	let selectedOption: Option | null = null;
+	let selectedOption: Option | null;
 	let programs: ProgramBrief[] = [];
+
+	function programOption({id, name}: ProgramBrief): Option {
+		return {value: id, label: name};
+	}
 
 	async function loadPrograms(searchQuery: string): Promise<void> {
 		const response = await axios.get('/api/programs', {params: {autocomplete: searchQuery}});
 		programs = response.data;
-		//programWasm = decodeBase64(response.data.wasm);
 	}
 
 	async function loadOptions(searchQuery: string): Promise<Option[]> {
 		await loadPrograms(searchQuery);
-		return programs.map(({id, name}) => {
-			return {value: id, label: name};
-		});
+		return programs.map(programOption);
 	}
 
-	$: program = programs.find((program) => program.id === selectedOption?.value) || null;
+	function onSelect(option: Option | null) {
+		program = programs.find((program) => program.id === option?.value) || null;
+	}
+
+	$: selectedOption = program && programOption(program);
 </script>
 
 <FancySelect
 	defaultLabel={'Select a program'}
 	searchPlaceholder='Search programs'
 	loadOptions={loadOptions}
-	bind:selected={selectedOption}
+	selected={selectedOption}
+	on:select={({detail}) => onSelect(detail)}
 >
 	{#if program}
 	<Link class="dropdown-item" to={`/programs/${program.id}`}>Show Details</Link>

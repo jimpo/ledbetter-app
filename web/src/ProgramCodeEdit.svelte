@@ -42,12 +42,6 @@
 	.program-code-edit {
 		font-family: monospace;
 	}
-	.program-code-edit.program-code-valid {
-		height: 640px;
-	}
-	.program-code-edit.program-code-invalid {
-		height: 320px;
-	}
 	.program-code-error {
 		height: 100%;
 	  font-family: monospace;

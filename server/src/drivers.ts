@@ -21,6 +21,7 @@ export async function listConnected(): Promise<LEDDriver[]> {
 			id: client.id,
 			name: client.name,
 			ipAddress: '',
+			status: client.status,
 		};
 	});
 }

@@ -1,17 +1,29 @@
 <script lang="ts">
+	import {createEventDispatcher} from 'svelte';
 	import type {Option} from './types';
 
-	let searchQuery: string | null = null;
-	let options: Option[] = [];
-	export let isActive: boolean = false;
 	export let defaultLabel: string = '';
 	export let searchPlaceholder: string;
 	export let loadOptions: (searchQuery: string) => Promise<Option[]>;
 	export let selected: Option | null;
 
+	let searchQuery: string | null = null;
+	let options: Option[] = [];
+	let dropdownElement: HTMLDivElement;
+	let isActive: boolean = false;
+
+	const dispatch = createEventDispatcher();
+
 	function selectOption(option: Option | null) {
-		selected = option;
 		isActive = false;
+		dispatch('select', option);
+	}
+
+	function onFocusOut(event: FocusEvent) {
+		const nowFocused = event.relatedTarget;
+		if (!((nowFocused instanceof Node) && dropdownElement.contains(nowFocused)))	{
+			isActive = false;
+		}
 	}
 
 	async function onSearchQueryChange(searchQuery: string | null) {
@@ -34,12 +46,17 @@
 		display: flex;
 	}
 
-	.dropdown.is-fullwidth .dropdown-trigger, .dropdown.is-fullwidth .dropdown-menu {
+  .dropdown.is-fullwidth .dropdown-trigger, .dropdown.is-fullwidth .dropdown-menu {
 		width: 100%;
 	}
 </style>
 
-<div class="dropdown is-fullwidth" class:is-active={isActive}>
+<div
+	class="dropdown is-fullwidth"
+	class:is-active={isActive}
+	bind:this={dropdownElement}
+	on:focusout={onFocusOut}
+>
 	<div class="dropdown-trigger">
 		<button
 			class="button is-fullwidth"
@@ -79,7 +96,7 @@
 				<a
 					class="dropdown-item"
 					class:is-active={option.value === selected?.value}
-					href="#"
+					href={'#'}
 					on:click|preventDefault={() => selectOption(option)}
 				>
 					{option.label}

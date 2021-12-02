@@ -4,3 +4,5 @@ export interface Option {
 }
 
 export type Status = 'Playing' | 'Paused' | 'Not Playing';
+
+export type RunPayload = {programId: string};

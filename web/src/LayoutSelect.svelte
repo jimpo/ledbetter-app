@@ -7,8 +7,12 @@
 
 	export let layout: Layout | null;
 
-	let selectedOption: Option | null = null;
+	let selectedOption: Option | null;
 	let layouts: Layout[] = [];
+
+	function layoutOption({id, name}: Layout): Option {
+		return {value: id, label: name};
+	}
 
 	async function loadLayouts(searchQuery: string): Promise<void> {
 		const response = await axios.get('/api/layouts', {params: {autocomplete: searchQuery}});
@@ -17,19 +21,22 @@
 
 	async function loadOptions(searchQuery: string): Promise<Option[]> {
 		await loadLayouts(searchQuery);
-		return layouts.map(({id, name}) => {
-			return {value: id, label: name};
-		});
+		return layouts.map(layoutOption);
 	}
 
-	$: layout = layouts.find((layout) => layout.id === selectedOption?.value) || null;
+	function onSelect(option: Option | null) {
+		layout = layouts.find((layout) => layout.id === option?.value) || null;
+	}
+
+	$: selectedOption = layout && layoutOption(layout);
 </script>
 
 <FancySelect
 	defaultLabel={'Select a layout'}
 	searchPlaceholder='Search layouts'
 	loadOptions={loadOptions}
-	bind:selected={selectedOption}
+	selected={selectedOption}
+	on:select={({detail}) => onSelect(detail)}
 >
 	<Link class="dropdown-item" to="/layouts/new">Create new layout</Link>
 	<hr class="dropdown-divider"/>

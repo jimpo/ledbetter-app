@@ -57,6 +57,14 @@ export async function getProgramWasmSourceMap(ctx: Koa.Context, next: Koa.Next):
 	await next();
 }
 
+export async function deleteProgram(ctx: Koa.Context, next: Koa.Next): Promise<void> {
+	const found = await programsMod.destroy(ctx.params.id);
+	if (found) {
+		ctx.status = 200;
+	}
+	await next();
+}
+
 export async function createProgram(ctx: Koa.Context, next: Koa.Next): Promise<void> {
 	const requestSchema = Joi.object({
 		name: Joi.string()

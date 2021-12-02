@@ -99,3 +99,13 @@ export async function pauseLEDDriver(ctx: RouterContext, next: Koa.Next) {
 	}
 	await next();
 }
+
+export async function stopLEDDriver(ctx: RouterContext, next: Koa.Next) {
+	const connectedDrivers = getConnectedDrivers();
+	const driverClient = connectedDrivers.get(ctx.params.id);
+	if (driverClient) {
+		const status = await driverClient.stop();
+		ctx.body = {status};
+	}
+	await next();
+}

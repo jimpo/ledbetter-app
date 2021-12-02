@@ -5,11 +5,12 @@ import send from 'koa-send';
 import {isHttpError} from 'http-errors';
 
 import {
-	listLEDDrivers, createLEDDriver, runLEDDriver, playLEDDriver, pauseLEDDriver,
+	listLEDDrivers, createLEDDriver, runLEDDriver, playLEDDriver, pauseLEDDriver, stopLEDDriver,
 } from './routes/drivers.js';
 import {listLayouts, createLayout} from './routes/layouts.js';
 import {
-	listPrograms, compileProgram, createProgram, getProgram, getProgramWasm, getProgramWasmSourceMap,
+	deleteProgram, listPrograms, compileProgram, createProgram, getProgram,
+	getProgramWasm, getProgramWasmSourceMap,
 } from './routes/programs.js';
 
 async function checkJsonContentType(ctx: ExtendableContext, next: Koa.Next) {
@@ -54,10 +55,12 @@ const apiRouter = new Router({prefix: '/api'})
 	.post('/drivers/:id/run', runLEDDriver)
 	.post('/drivers/:id/play', playLEDDriver)
 	.post('/drivers/:id/pause', pauseLEDDriver)
+	.post('/drivers/:id/stop', stopLEDDriver)
 	.get('/layouts', listLayouts)
 	.post('/layouts', createLayout)
 	.get('/programs', listPrograms)
 	.get('/programs/:id', getProgram)
+	.delete('/programs/:id', deleteProgram)
 	.get('/programs/:id/main.wasm', getProgramWasm)
 	.get('/programs/:id/main.wasm.map', getProgramWasmSourceMap)
 	.post('/programs', createProgram)

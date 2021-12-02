@@ -130,9 +130,24 @@ test('POST /programs/compile compiles a program', async () => {
 			{ name: 'initLayoutSetPixelLoc', kind: 'function' },
 			{ name: 'initLayoutDone', kind: 'function' },
 			{ name: 'tick', kind: 'function' },
-			{ name: 'getPixelRed', kind: 'function' },
-			{ name: 'getPixelGrn', kind: 'function' },
-			{ name: 'getPixelBlu', kind: 'function' },
+			{ name: 'getPixelVal', kind: 'function' },
 			{ name: 'memory', kind: 'memory' }
 		]));
+});
+
+test('DELETE /program/:id deletes program', async () => {
+	const program = await createTestProgram();
+
+	const response = await request(app.callback())
+		.delete(`/api/programs/${program.id}`);
+	expect(response.status).toBe(200);
+
+	const programLookup = await programsMod.get(program.id);
+	expect(programLookup).toBeUndefined();
+});
+
+test('DELETE /program/:id 404s on unknown program', async () => {
+	const response = await request(app.callback())
+		.delete(`/api/programs/${randomUUID()}`);
+	expect(response.status).toBe(404);
 });
