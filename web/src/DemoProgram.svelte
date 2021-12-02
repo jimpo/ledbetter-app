@@ -9,6 +9,10 @@
 	import ProgramSelect from './ProgramSelect.svelte';
 	import DriverSelect from './DriverSelect.svelte';
 	import ControlButtons from "./ControlButtons.svelte";
+	import type {Writable} from "svelte/store";
+	import {writable} from "svelte/store";
+	import type {DriverControl} from "./driverControl";
+	import {BrowserAnimationDriver, ExternalDriver} from "./driverControl";
 
 	const registerFocus = useFocus();
 
@@ -16,7 +20,8 @@
 	let driver: LEDDriver | null = null;
 	let programBrief: ProgramBrief | null = null;
 	let pixelLayout: PixelLayout | null;
-	let driverStatus: DriverStatus = 'NotPlaying';
+	let driverStatus: Writable<DriverStatus> = writable('NotPlaying');
+	let driverControl: DriverControl;
 
 	let programWasm: BufferSource | null = null;
 
@@ -34,6 +39,14 @@
 
 	$: pixelLayout = layout ? layoutLib.parseCode(layout.sourceCode) : null;
 	$: fetchProgramWasm(programBrief);
+	$: {
+		if (driver !== null) {
+			const runPayload = programBrief && {programId: programBrief.id};
+			driverControl = new ExternalDriver(driver.id, runPayload, $driverStatus, driverStatus);
+		} else {
+			driverControl = new BrowserAnimationDriver(layout, programWasm, driverStatus);
+		}
+	}
 </script>
 
 <div class="container">
@@ -46,7 +59,7 @@
 			aspectRatio={1}
 			layout={pixelLayout}
 			{programWasm}
-			status={driver == null ? driverStatus : 'NotPlaying'}
+			status={driver === null ? $driverStatus : 'NotPlaying'}
 		/>
 	</div>
 	<div class="block">
@@ -54,7 +67,7 @@
 			<div class="column">
 				<DriverSelect
 					bind:selected={driver}
-					on:select={({detail: selected}) => driverStatus = selected?.status || 'NotPlaying'}
+					on:select={({detail: selected}) => driverStatus.set(selected?.status || 'NotPlaying')}
 				/>
 			</div>
 			<div class="column">
@@ -64,12 +77,7 @@
 				<ProgramSelect bind:program={programBrief} />
 			</div>
 			<div class="column">
-				<ControlButtons
-					bind:status={driverStatus}
-					ready={programWasm !== null && (driver !== null || layout !== null)}
-					driverId={driver?.id}
-					runPayload={programBrief ? {programId: programBrief.id} : null}
-				/>
+				<ControlButtons status={$driverStatus} {driverControl} />
 			</div>
 		</div>
 	</div>

@@ -8,6 +8,10 @@
 	import ProgramCodeEdit from './ProgramCodeEdit.svelte';
 	import ControlButtons from "./ControlButtons.svelte";
 	import LoadingIcon from "./LoadingIcon.svelte";
+	import {writable} from "svelte/store";
+	import type {Writable} from "svelte/store";
+	import {BrowserAnimationDriver} from "./driverControl";
+	import type {DriverControl} from "./driverControl";
 
 	const registerFocus = useFocus();
 	const params = useParams();
@@ -21,8 +25,10 @@
 	let nameInput: HTMLInputElement;
 	let bannerError: string | null = null;
 
-	let demoStatus: DriverStatus = 'NotPlaying';
 	let programWasm: BufferSource | null = null;
+
+	let demoStatus: Writable<DriverStatus> = writable('NotPlaying');
+	let driverControl: DriverControl;
 
 	let programCode = '';
 
@@ -40,38 +46,9 @@
 		navigate('/');
 	}
 
-	// async function handleCreate() {
-	// 	if (programWasm === null) {
-	// 		return;
-	// 	}
-	// 	bannerError = null;
-	//
-	// 	if (/^\s*$/.test(name)) {
-	// 		nameInput.focus();
-	// 		return;
-	// 	}
-	//
-	// 	creating = true;
-	// 	try {
-	// 		await axios.post('/api/programs', {name, sourceCode: {'PixelAnimation.ts': programCode}});
-	// 	} catch (untypedErr) {
-	// 		const err = untypedErr as AxiosError;
-	// 		if (err.response.status === 422 &&
-	// 			err.response.data instanceof Object &&
-	// 			err.response.data.hasOwnProperty('error'))
-	// 		{
-	// 			let {error: errMessage} = err.response.data as {error: string};
-	// 			bannerError = errMessage
-	// 		}
-	// 		creating = false;
-	// 		return;
-	// 	}
-	//
-	// 	navigate('/demo');
-	// }
-
 	loadProgram();
 	$: pixelLayout = layout ? layoutLib.parseCode(layout.sourceCode) : null;
+	$: driverControl = new BrowserAnimationDriver(layout, programWasm, demoStatus);
 </script>
 
 <style>
@@ -140,7 +117,7 @@
 		</div>
 
 		<div class="block">
-			<Animation aspectRatio={1} layout={pixelLayout} {programWasm} status={demoStatus} />
+			<Animation aspectRatio={1} layout={pixelLayout} {programWasm} status={$demoStatus} />
 		</div>
 
 		<div class="columns">
@@ -148,10 +125,7 @@
 				<LayoutSelect bind:layout={layout} />
 			</div>
 			<div class="column">
-				<ControlButtons
-					bind:status={demoStatus}
-					ready={programWasm !== null && layout !== null}
-				/>
+				<ControlButtons status={$demoStatus} {driverControl} />
 			</div>
 		</div>
 	{/await}

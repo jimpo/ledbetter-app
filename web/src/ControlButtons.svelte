@@ -1,12 +1,9 @@
 <script lang="ts">
 	import type {DriverStatus} from 'ledbetter-common';
-	import axios, {AxiosResponse} from "axios";
-	import type {RunPayload} from './types';
+	import type {DriverControl} from "./driverControl";
 
-	export let ready: boolean = false;
-	export let status: DriverStatus = 'NotPlaying';
-	export let driverId: string | null = 	null;
-	export let runPayload: RunPayload | null = null;
+	export let status: DriverStatus;
+	export let driverControl: DriverControl;
 
 	let actionPending: boolean = false;
 
@@ -17,56 +14,13 @@
 			actionPending = false;
 		}
 	}
-
-	async function play() {
-		if (!ready) {
-			return;
-		}
-
-		if (driverId) {
-			let response: AxiosResponse;
-			if (status === 'Paused') {
-				response = await axios.post(`/api/drivers/${driverId}/play`, {});
-			} else {
-				if (!runPayload) {
-					console.error('Play button pressed and unable to play');
-					return;
-				}
-				response = await axios.post(`/api/drivers/${driverId}/run`, runPayload);
-			}
-			if (response.data.status !== 'Playing') {
-				console.error("failed to play program", response.data);
-			}
-		}
-		status = 'Playing';
-	}
-
-	async function pause() {
-		if (driverId) {
-			const response = await axios.post(`/api/drivers/${driverId}/pause`, {});
-			if (response.data.status !== 'Paused') {
-				console.error("failed to pause program", response.data);
-			}
-		}
-		status = 'Paused';
-	}
-
-	async function stop() {
-		if (driverId) {
-			const response = await axios.post(`/api/drivers/${driverId}/stop`, {});
-			if (response.data.status !== 'NotPlaying') {
-				console.error("failed to stop program", response.data);
-			}
-		}
-		status = 'NotPlaying';
-	}
 </script>
 
 <button
 	class="button is-success is-light"
 	class:is-loading={actionPending}
-	on:click|preventDefault={() => disableWhilePending(play())}
-	disabled={status === 'Playing' || !ready}
+	on:click|preventDefault={() => disableWhilePending(driverControl.play())}
+	disabled={status === 'Playing' || !driverControl.canPlay}
 >
 	<span class="icon">
 		<i class="fas fa-play"></i>
@@ -76,7 +30,7 @@
 <button
 	class="button is-warning is-light"
 	class:is-loading={actionPending}
-	on:click|preventDefault={() => disableWhilePending(pause())}
+	on:click|preventDefault={() => disableWhilePending(driverControl.pause())}
 	disabled={status !== 'Playing'}
 >
 	<span class="icon">
@@ -87,7 +41,7 @@
 <button
 	class="button is-danger is-light"
 	class:is-loading={actionPending}
-	on:click|preventDefault={() => disableWhilePending(stop())}
+	on:click|preventDefault={() => disableWhilePending(driverControl.stop())}
 	disabled={status === 'NotPlaying'}
 >
 	<span class="icon">

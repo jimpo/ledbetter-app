@@ -7,6 +7,10 @@
 	import LayoutSelect from './LayoutSelect.svelte';
 	import ProgramCodeEdit from './ProgramCodeEdit.svelte';
 	import ControlButtons from "./ControlButtons.svelte";
+	import {writable} from "svelte/store";
+	import type {Writable} from "svelte/store";
+	import {BrowserAnimationDriver} from "./driverControl";
+	import type {DriverControl} from "./driverControl";
 
 	const registerFocus = useFocus();
 
@@ -18,8 +22,10 @@
 	let nameInput: HTMLInputElement;
 	let bannerError: string | null = null;
 
-	let demoStatus: DriverStatus = 'NotPlaying';
 	let programWasm: BufferSource | null = null;
+
+	let demoStatus: Writable<DriverStatus> = writable('NotPlaying');
+	let driverControl: DriverControl;
 
 	const SAMPLE_PROGRAM_CODE =
 		`import {Pixel} from './mainTypes';
@@ -66,6 +72,7 @@ export class PixelAnimation {
 	}
 
 	$: pixelLayout = layout ? layoutLib.parseCode(layout.sourceCode) : null;
+	$: driverControl = new BrowserAnimationDriver(layout, programWasm, demoStatus);
 </script>
 
 <style>
@@ -121,7 +128,7 @@ export class PixelAnimation {
 	</div>
 
 	<div class="block">
-		<Animation aspectRatio={1} layout={pixelLayout} {programWasm} status={demoStatus} />
+		<Animation aspectRatio={1} layout={pixelLayout} {programWasm} status={$demoStatus} />
 	</div>
 
 	<div class="block columns">
@@ -129,10 +136,7 @@ export class PixelAnimation {
 			<LayoutSelect bind:layout={layout} />
 		</div>
 		<div class="column">
-			<ControlButtons
-				bind:status={demoStatus}
-				ready={programWasm !== null && layout !== null}
-			/>
+			<ControlButtons status={$demoStatus} {driverControl} />
 		</div>
 	</div>
 </div>
