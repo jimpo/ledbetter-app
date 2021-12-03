@@ -11,6 +11,7 @@
 	import type {Writable} from "svelte/store";
 	import {BrowserAnimationDriver} from "./driverControl";
 	import type {DriverControl} from "./driverControl";
+	import WasmDropZone from "./WasmDropZone.svelte";
 
 	const registerFocus = useFocus();
 
@@ -23,6 +24,7 @@
 	let bannerError: string | null = null;
 
 	let programWasm: BufferSource | null = null;
+	let programWasmEditor: BufferSource | null = null;
 
 	let demoStatus: Writable<DriverStatus> = writable('NotPlaying');
 	let driverControl: DriverControl;
@@ -124,11 +126,13 @@ export class PixelAnimation {
 	</div>
 
 	<div class="block">
-		<ProgramCodeEdit bind:programCode bind:programWasm disabled={creating} />
+		<ProgramCodeEdit bind:programCode bind:programWasm={programWasmEditor} disabled={creating} />
 	</div>
 
 	<div class="block">
-		<Animation aspectRatio={1} layout={pixelLayout} {programWasm} status={$demoStatus} />
+		<WasmDropZone on:wasmDrop={({detail: wasm}) => programWasm = wasm}>
+			<Animation aspectRatio={1} layout={pixelLayout} {programWasm} status={$demoStatus} />
+		</WasmDropZone>
 	</div>
 
 	<div class="block columns">
