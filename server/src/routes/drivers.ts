@@ -7,6 +7,8 @@ import {LEDDriver} from 'ledbetter-common';
 import * as drivers from '../drivers.js';
 import * as programs from '../programs.js';
 import {getConnectedDrivers} from '../driverManager.js';
+import {type} from "os";
+import multer from "@koa/multer";
 
 export async function listLEDDrivers(ctx: RouterContext, next: Koa.Next) {
 	let results: LEDDriver[];
@@ -47,11 +49,12 @@ export async function createLEDDriver(ctx: RouterContext, next: Koa.Next) {
 	await next();
 }
 
-export async function runLEDDriver(ctx: RouterContext, next: Koa.Next) {
+export async function runProgramOnLEDDriver(ctx: RouterContext, next: Koa.Next) {
 	const requestSchema = Joi.object({
-		programId: Joi.string().uuid(),
-		wasm: Joi.string().base64(),
-	}).xor('programId', 'wasm');
+		programId: Joi.string()
+			.uuid()
+			.required(),
+	});
 
 	const { value: body, error } = requestSchema.validate(ctx.request.body);
 	if (error) {
@@ -66,23 +69,43 @@ export async function runLEDDriver(ctx: RouterContext, next: Koa.Next) {
 		return await next();
 	}
 
-	const {programId, wasm: wasmB64} = body as {programId?: string, wasm?: string};
-
-	let wasm: Buffer;
-	if (programId !== undefined) {
-		const program = await programs.get(programId);
-		if (!program) {
-			ctx.status = 422;
-			ctx.body = {error: `No program found with id ${programId}`};
-			return await next();
-		}
-		wasm = Buffer.from(program.wasm);
-	} else if (wasmB64 !== undefined) {
-		wasm = Buffer.from(wasmB64, 'base64');
-	} else {
-		throw new Error('programId and wasm are undefined despite Joi validation');
+	const {programId} = body as {programId: string};
+	const program = await programs.get(programId);
+	if (!program) {
+		ctx.status = 422;
+		ctx.body = {error: `No program found with id ${programId}`};
+		return await next();
 	}
 
+	const wasm = Buffer.from(program.wasm);
+	const status = await driverClient.run(wasm);
+	ctx.body = {status};
+	await next();
+}
+
+export async function runWasmOnLEDDriver(ctx: RouterContext, next: Koa.Next) {
+	const connectedDrivers = getConnectedDrivers();
+	const driverClient = connectedDrivers.get(ctx.params.id);
+	if (!driverClient) {
+		return await next();
+	}
+
+	const files = ctx.request.files as {[p: string]: multer.File[]};
+	const wasmFiles = files['wasm'];
+	if (!wasmFiles) {
+		ctx.status = 400;
+		ctx.body = {error: "Request must have a Wasm file attached"};
+		return await next();
+	}
+
+	const wasmFile = wasmFiles[0];
+	if (wasmFile.mimetype !== 'application/wasm') {
+		ctx.status = 415;
+		ctx.body = {error: "Attached file must have mimetype application/wasm"};
+		return await next();
+	}
+
+	const wasm = wasmFile.buffer;
 	const status = await driverClient.run(wasm);
 	ctx.body = {status};
 	await next();

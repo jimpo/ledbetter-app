@@ -1,19 +1,24 @@
-import Koa, {ExtendableContext} from 'koa';
-import Router from '@koa/router';
+import Koa, {DefaultContext, DefaultState} from 'koa';
+import Router, {RouterContext} from '@koa/router';
 import bodyParser from 'koa-bodyparser';
 import send from 'koa-send';
 import {isHttpError} from 'http-errors';
 
 import {
-	listLEDDrivers, createLEDDriver, runLEDDriver, playLEDDriver, pauseLEDDriver, stopLEDDriver,
+	listLEDDrivers, createLEDDriver, runProgramOnLEDDriver, runWasmOnLEDDriver, playLEDDriver,
+	pauseLEDDriver, stopLEDDriver,
 } from './routes/drivers.js';
 import {listLayouts, createLayout} from './routes/layouts.js';
 import {
 	deleteProgram, listPrograms, compileProgram, createProgram, getProgram,
 	getProgramWasm, getProgramWasmSourceMap,
 } from './routes/programs.js';
+import compose from "koa-compose";
+import multer from "@koa/multer";
 
-async function checkJsonContentType(ctx: ExtendableContext, next: Koa.Next) {
+type DefaultRouterContext = RouterContext<DefaultState, DefaultContext>;
+
+async function checkJsonContentType(ctx: DefaultRouterContext, next: Koa.Next) {
     /// The === false is because null indicates no request body
     if (ctx.is('application/json') === false) {
         ctx.throw(415, 'API only accepts JSON requests');
@@ -47,28 +52,75 @@ async function serveStaticFiles(ctx: Koa.Context, next: Koa.Next) {
 	await next();
 }
 
-const apiRouter = new Router({prefix: '/api'})
-	.use(checkJsonContentType)
-	.use(bodyParser())
+function newJsonBodyParser(opts?: bodyParser.Options)
+	: Router.Middleware<DefaultState, DefaultContext>
+{
+	return compose<DefaultRouterContext>([checkJsonContentType, bodyParser(opts)]);
+}
+
+function multipartBodyParser(files: multer.Field[], opts?: bodyParser.Options)
+	: Router.Middleware<DefaultState, DefaultContext>
+{
+	const upload = multer();
+	const fields = files.concat([{name: 'body', maxCount: 1}]);
+
+	async function parseBody(ctx: DefaultRouterContext, next: Koa.Next) {
+		const {body: bodyJson} = ctx.request.body as {body: string};
+		let body;
+		try {
+			body = JSON.parse(bodyJson);
+		} catch (err) {
+			ctx.throw(400, 'body field is not valid JSON: ' + err);
+		}
+		ctx.request.body = body;
+		await next();
+	}
+
+	return compose<DefaultRouterContext>([upload.fields(fields), parseBody]);
+}
+
+const jsonBodyParser = newJsonBodyParser();
+let apiRouter = new Router<DefaultState, DefaultContext>({prefix: '/api'})
 	.get('/drivers', listLEDDrivers)
-	.post('/drivers', createLEDDriver)
-	.post('/drivers/:id/run', runLEDDriver)
-	.post('/drivers/:id/play', playLEDDriver)
-	.post('/drivers/:id/pause', pauseLEDDriver)
-	.post('/drivers/:id/stop', stopLEDDriver)
+	.post('/drivers', jsonBodyParser, createLEDDriver)
+	.post('/drivers/:id/run-prog', jsonBodyParser, runProgramOnLEDDriver)
+	.post(
+		'/drivers/:id/run-wasm',
+		multipartBodyParser([{name: 'wasm', maxCount: 1}]),
+		runWasmOnLEDDriver
+	)
+	.post('/drivers/:id/play', jsonBodyParser, playLEDDriver)
+	.post('/drivers/:id/pause', jsonBodyParser, pauseLEDDriver)
+	.post('/drivers/:id/stop', jsonBodyParser, stopLEDDriver)
 	.get('/layouts', listLayouts)
-	.post('/layouts', createLayout)
+	.post('/layouts', jsonBodyParser, createLayout)
 	.get('/programs', listPrograms)
 	.get('/programs/:id', getProgram)
 	.delete('/programs/:id', deleteProgram)
 	.get('/programs/:id/main.wasm', getProgramWasm)
 	.get('/programs/:id/main.wasm.map', getProgramWasmSourceMap)
-	.post('/programs', createProgram)
-	.post('/programs/compile', compileProgram);
+	.post('/programs', jsonBodyParser, createProgram)
+	.post('/programs/compile', jsonBodyParser, compileProgram);
+
+if (process.env.NODE_ENV === 'test') {
+	apiRouter
+		.post('/echo-json', jsonBodyParser, async (ctx, next) => {
+			ctx.body = ctx.request.body;
+			await next();
+		})
+		.post(
+			'/echo-multipart',
+			multipartBodyParser([{name: 'wasm', maxCount: 1}]),
+			async (ctx, next) => {
+				ctx.body = ctx.request.body;
+				await next();
+			}
+		);
+}
 
 const app = new Koa()
-    .use(apiRouter.routes())
-    .use(apiRouter.allowedMethods())
+	.use(apiRouter.routes())
+	.use(apiRouter.allowedMethods())
 	.use(serveStaticFiles);
 
 export default app;
