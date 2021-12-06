@@ -13,7 +13,7 @@
 		return isWasmFile ? item.getAsFile() : null;
 	}
 
-	function handleDragover(event: DragEvent) {
+	function handleDragover(_event: DragEvent) {
 	}
 
 	async function handleDrop(event: DragEvent) {

@@ -13,6 +13,9 @@
 	import {writable} from "svelte/store";
 	import type {DriverControl} from "./driverControl";
 	import {BrowserAnimationDriver, ExternalDriver} from "./driverControl";
+	import WasmDropZone from "./WasmDropZone.svelte";
+	import {tick} from "svelte";
+	import {encodeBase64} from "./util";
 
 	const registerFocus = useFocus();
 
@@ -23,7 +26,16 @@
 	let driverStatus: Writable<DriverStatus> = writable('NotPlaying');
 	let driverControl: DriverControl;
 
-	let programWasm: BufferSource | null = null;
+	let programWasm: ArrayBuffer | null = null;
+
+	async function selectNewProgram(wasm: ArrayBuffer | null) {
+		await driverControl.stop();
+		programWasm = wasm;
+		await tick(); // Wait for driverControl update
+		if (driverControl.canPlay) {
+			await driverControl.play();
+		}
+	}
 
 	async function fetchProgramWasm(programBrief: ProgramBrief | null) {
 		if (programBrief) {
@@ -31,17 +43,18 @@
 				`/api/programs/${programBrief.id}/main.wasm`,
 				{responseType: 'arraybuffer'},
 			);
-			programWasm = response.data;
+			await selectNewProgram(response.data);
 		} else {
-			programWasm = null;
+			await selectNewProgram(null);
 		}
 	}
 
-	$: pixelLayout = layout ? layoutLib.parseCode(layout.sourceCode) : null;
-	$: fetchProgramWasm(programBrief);
+	$: pixelLayout = layout && layoutLib.parseCode(layout.sourceCode);
 	$: {
 		if (driver !== null) {
-			const runPayload = programBrief && {programId: programBrief.id};
+			const runPayload =
+				(programBrief && {programId: programBrief.id}) ||
+				(programWasm && {wasm: encodeBase64(programWasm)});
 			driverControl = new ExternalDriver(driver.id, runPayload, $driverStatus, driverStatus);
 		} else {
 			driverControl = new BrowserAnimationDriver(layout, programWasm, driverStatus);
@@ -55,12 +68,14 @@
 	</div>
 
 	<div class="block">
-		<Animation
-			aspectRatio={1}
-			layout={pixelLayout}
-			{programWasm}
-			status={driver === null ? $driverStatus : 'NotPlaying'}
-		/>
+		<WasmDropZone on:wasmDrop={({detail: wasm}) => selectNewProgram(wasm)}>
+			<Animation
+				aspectRatio={1}
+				layout={pixelLayout}
+				{programWasm}
+				status={driver === null ? $driverStatus : 'NotPlaying'}
+			/>
+		</WasmDropZone>
 	</div>
 	<div class="block">
 		<div class="columns">
@@ -74,7 +89,10 @@
 				<LayoutSelect bind:layout={layout} />
 			</div>
 			<div class="column">
-				<ProgramSelect bind:program={programBrief} />
+				<ProgramSelect
+					bind:program={programBrief}
+					on:select={({detail: selected}) => fetchProgramWasm(selected)}
+				/>
 			</div>
 			<div class="column">
 				<ControlButtons status={$driverStatus} {driverControl} />

@@ -4,11 +4,14 @@
 	import type {ProgramBrief} from 'ledbetter-common';
 	import type {Option} from './types';
 	import FancySelect from './FancySelect.svelte';
+	import {createEventDispatcher} from "svelte";
 
 	export let program: ProgramBrief | null;
 
 	let selectedOption: Option | null;
 	let programs: ProgramBrief[] = [];
+
+	const dispatch = createEventDispatcher();
 
 	function programOption({id, name}: ProgramBrief): Option {
 		return {value: id, label: name};
@@ -26,6 +29,7 @@
 
 	function onSelect(option: Option | null) {
 		program = programs.find((program) => program.id === option?.value) || null;
+		dispatch('select', program);
 	}
 
 	$: selectedOption = program && programOption(program);

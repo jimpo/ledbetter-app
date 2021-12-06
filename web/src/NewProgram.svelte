@@ -5,13 +5,13 @@
 	import axios, {AxiosError} from "axios";
 	import {DriverStatus, pixelLayout as layoutLib} from "ledbetter-common";
 	import LayoutSelect from './LayoutSelect.svelte';
-	import ProgramCodeEdit from './ProgramCodeEdit.svelte';
 	import ControlButtons from "./ControlButtons.svelte";
 	import {writable} from "svelte/store";
 	import type {Writable} from "svelte/store";
 	import {BrowserAnimationDriver} from "./driverControl";
 	import type {DriverControl} from "./driverControl";
 	import WasmDropZone from "./WasmDropZone.svelte";
+	import {tick} from "svelte";
 
 	const registerFocus = useFocus();
 
@@ -28,20 +28,6 @@
 
 	let demoStatus: Writable<DriverStatus> = writable('NotPlaying');
 	let driverControl: DriverControl;
-
-	const SAMPLE_PROGRAM_CODE =
-		`import {Pixel} from './mainTypes';
-
-export class PixelAnimation {
-  constructor(private pixels: Pixel[][]) {
-  }
-
-  tick(): void {
-  }
-}
-`;
-
-	let programCode = SAMPLE_PROGRAM_CODE;
 
 	async function handleCreate() {
 		if (programWasm === null) {
@@ -71,6 +57,14 @@ export class PixelAnimation {
 		}
 
 		navigate('/');
+	}
+
+	async function handleNewWasm(wasm: BufferSource) {
+		await driverControl.stop();
+		programWasm = wasm;
+		// Wait for driverControl to update
+		await tick();
+		await driverControl.play();
 	}
 
 	$: pixelLayout = layout ? layoutLib.parseCode(layout.sourceCode) : null;
@@ -126,11 +120,7 @@ export class PixelAnimation {
 	</div>
 
 	<div class="block">
-		<ProgramCodeEdit bind:programCode bind:programWasm={programWasmEditor} disabled={creating} />
-	</div>
-
-	<div class="block">
-		<WasmDropZone on:wasmDrop={({detail: wasm}) => programWasm = wasm}>
+		<WasmDropZone on:wasmDrop={({detail: wasm}) => handleNewWasm(wasm)}>
 			<Animation aspectRatio={1} layout={pixelLayout} {programWasm} status={$demoStatus} />
 		</WasmDropZone>
 	</div>
