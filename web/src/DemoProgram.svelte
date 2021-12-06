@@ -54,7 +54,7 @@
 		if (driver !== null) {
 			const runPayload =
 				(programBrief && {programId: programBrief.id}) ||
-				(programWasm && {wasm: encodeBase64(programWasm)});
+				(programWasm && {wasm: programWasm});
 			driverControl = new ExternalDriver(driver.id, runPayload, $driverStatus, driverStatus);
 		} else {
 			driverControl = new BrowserAnimationDriver(layout, programWasm, driverStatus);

@@ -53,12 +53,17 @@ export class ExternalDriver {
 		let response: AxiosResponse;
 		if (this.status === 'Paused') {
 			response = await axios.post(`/api/drivers/${this.driverId}/play`, {});
+		} else if (!this.runPayload) {
+			console.error('Play button pressed and unable to play');
+			return;
+		} else if ('programId' in this.runPayload) {
+			response = await axios.post(`/api/drivers/${this.driverId}/run-prog`, this.runPayload);
 		} else {
-			if (!this.runPayload) {
-				console.error('Play button pressed and unable to play');
-				return;
-			}
-			response = await axios.post(`/api/drivers/${this.driverId}/run`, this.runPayload);
+			const {wasm} = this.runPayload;
+			const formData = new FormData();
+			formData.append('body', JSON.stringify(null));
+			formData.append('wasm', new Blob([wasm], {type: 'application/wasm'}));
+			response = await axios.post(`/api/drivers/${this.driverId}/run-wasm`, formData);
 		}
 		if (response.data.status !== 'Playing') {
 			console.error("failed to play program", response.data);
