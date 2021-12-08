@@ -11,10 +11,17 @@ import {randomUUID} from "crypto";
 
 const connectedDrivers: Map<String, DriverClient> = new Map<String, DriverClient>();
 
+const PING_INTERVAL = 5000;
+
 // This is mostly copied from the implementation of WebSocketTransport in @open-rpc/client-js
 class WebSocketConnectionTransport extends Transport {
+	private awaitingPong: boolean;
+	private pingInterval: NodeJS.Timer;
+
 	constructor(public connection: WebSocket) {
 		super();
+		this.awaitingPong = false;
+		this.pingInterval = setInterval(() => this._ping(), PING_INTERVAL);
 	}
 
 	public async connect(): Promise<any> {
@@ -28,6 +35,9 @@ class WebSocketConnectionTransport extends Transport {
 			const data = Array.isArray(rawData) ? rawData.join() : rawData.toString();
 			this.transportRequestManager.resolveResponse(data);
 		});
+
+		const self = this;
+		this.connection.on('pong', (_data) => self.awaitingPong = false);
 	}
 
 	public async sendData(data: JSONRPCRequestData, timeout: number | null = 5000): Promise<any> {
@@ -47,6 +57,18 @@ class WebSocketConnectionTransport extends Transport {
 
 	public close(): void {
 		this.connection.close();
+		clearInterval(this.pingInterval);
+	}
+
+	_ping(): void {
+		if (this.awaitingPong) {
+			this.connection.terminate();
+			clearInterval(this.pingInterval);
+			return;
+		}
+
+		this.awaitingPong = true;
+		this.connection.ping();
 	}
 }
 
