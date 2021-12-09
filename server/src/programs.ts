@@ -43,10 +43,14 @@ export async function getWasmSourceMap(id: string): Promise<string | null | unde
 	return result && result.wasmSourceMap;
 }
 
-export async function list(): Promise<ProgramBrief[]> {
-	return await db<Program>('programs')
+export async function list(opts?: {prefix?: string}): Promise<ProgramBrief[]> {
+	let query = db<Program>('programs')
 		.select('id', 'name', 'apiVersion')
-		.limit(LIST_LIMIT);
+		.limit(LIST_LIMIT)
+	if (opts && opts.prefix) {
+		query = query.where('name', 'like', opts.prefix.replace('%', '\\%') + '%');
+	}
+	return await query;
 }
 
 export async function create(program: Program): Promise<void> {

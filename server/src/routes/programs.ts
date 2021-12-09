@@ -14,7 +14,11 @@ import {RouterContext} from "@koa/router";
 
 
 export async function listPrograms(ctx: Koa.Context, next: Koa.Next): Promise<void> {
-	ctx.body = await programsMod.list();
+	let opts = {};
+	if (ctx.query['autocomplete']) {
+		opts = {prefix: ctx.query['autocomplete']};
+	}
+	ctx.body = await programsMod.list(opts);
 	await next();
 }
 

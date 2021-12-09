@@ -24,8 +24,8 @@
 			return;
 		}
 
-		const wasmProgram = await file.arrayBuffer();
-		dispatch('wasmDrop', wasmProgram);
+		//const wasmProgram = await file.arrayBuffer();
+		dispatch('wasmDrop', file);//wasmProgram);
 	}
 </script>
 
