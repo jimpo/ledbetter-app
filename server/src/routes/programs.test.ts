@@ -94,6 +94,52 @@ test.skip('POST /programs rejects programs with invalid Wasm', async () => {
 	expect(response.status).toBe(422);
 });
 
+test('PUT /programs/:id 404s on unknown program', async () => {
+	const program = await createTestProgram();
+
+	const programBrief = {
+		id: program.id,
+		name: program.name,
+		apiVersion: program.apiVersion,
+	};
+	const response = await request(app.callback())
+		.put(`/api/programs/${randomUUID()}`)
+		.field('body', JSON.stringify(programBrief));
+	expect(response.status).toBe(404);
+});
+
+test('PUT /programs/:id rejects id changes', async () => {
+	const program = await createTestProgram();
+
+	const programBrief = {
+		id: randomUUID(),
+		name: program.name,
+		apiVersion: program.apiVersion,
+	};
+	const response = await request(app.callback())
+		.put(`/api/programs/${program.id}`)
+		.field('body', JSON.stringify(programBrief))
+		.attach('wasm', TEST_WASM_PATH, {contentType: 'application/wasm'});
+	expect(response.status).toBe(422);
+	expect(response.body.error).toEqual('id cannot be changed');
+});
+
+test('PUT /programs/:id updates the program', async () => {
+	const program = await createTestProgram();
+
+	const programBrief = {
+		id: program.id,
+		name: program.name,
+		apiVersion: program.apiVersion,
+	};
+	const response = await request(app.callback())
+		.put(`/api/programs/${program.id}`)
+		.field('body', JSON.stringify(programBrief))
+		.attach('wasm', TEST_WASM_PATH, {contentType: 'application/wasm'});
+	expect(response.status).toBe(200);
+	expect(response.body).toEqual(programBrief);
+});
+
 // test('POST /programs/compile compiles a program', async () => {
 // 	const compileResponse = await request(app.callback())
 // 		.post('/api/programs/compile')

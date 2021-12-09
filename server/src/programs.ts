@@ -55,16 +55,20 @@ export async function list(opts?: {prefix?: string}): Promise<ProgramBrief[]> {
 
 export async function create(program: Program): Promise<void> {
 	try {
-		return await db('programs').insert(program);
+		return await db<Program>('programs').insert(program);
 	} catch (err) {
-		if (err instanceof Object &&
-			err.hasOwnProperty('code') &&
-			err.hasOwnProperty('sqlMessage')) {
-			const {code, sqlMessage} = err as {code: string, sqlMessage: string};
-			if (code == 'ER_DUP_ENTRY' && sqlMessage.match(/programs\.programs_name_unique/)) {
-				throw new UniquenessError('name', `Program already exists with name: ${program.name}`);
-			}
-		}
+		checkUniquenessErrors(program, err);
+		throw err;
+	}
+}
+
+export async function update(program: Program): Promise<void> {
+	try {
+		return await db<Program>('programs')
+			.where('id', program.id)
+			.update(program);
+	}	catch (err) {
+		checkUniquenessErrors(program, err);
 		throw err;
 	}
 }
@@ -74,4 +78,15 @@ export async function destroy(id: string): Promise<boolean> {
 		.where('id', id)
 		.del();
 	return nRows !== 0;
+}
+
+function checkUniquenessErrors(program: Program, err: any) {
+	if (err instanceof Object &&
+		err.hasOwnProperty('code') &&
+		err.hasOwnProperty('sqlMessage')) {
+		const {code, sqlMessage} = err as {code: string, sqlMessage: string};
+		if (code == 'ER_DUP_ENTRY' && sqlMessage.match(/programs\.programs_name_unique/)) {
+			throw new UniquenessError('name', `Program already exists with name: ${program.name}`);
+		}
+	}
 }

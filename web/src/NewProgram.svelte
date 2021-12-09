@@ -116,7 +116,7 @@
 			class="button is-primary is-outlined is-small"
 			class:is-loading={creating}
 			title="Create"
-			disabled={programWasm === null ? true : null}
+			disabled={programWasm === null}
 			on:click|preventDefault={handleCreate}
 		>
 			<span class="icon">

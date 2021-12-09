@@ -129,6 +129,90 @@ export async function createProgram(ctx: RouterContext, next: Koa.Next): Promise
 	await next();
 }
 
+export async function putProgram(ctx: RouterContext, next: Koa.Next): Promise<void> {
+	const currentProgramBrief = await programsMod.getBrief(ctx.params.id);
+	if (!currentProgramBrief) {
+		return await next();
+	}
+
+	const requestSchema = Joi.object({
+		id: Joi.string().uuid().required(),
+		name: Joi.string().required(),
+		apiVersion: Joi.number().required(),
+	});
+
+	const { value: body, error } = requestSchema.validate(ctx.request.body);
+	if (error) {
+		ctx.status = 422;
+		ctx.body = error.details;
+		return await next();
+	}
+
+	const {id, name, apiVersion} = body as {id: string, name: string, apiVersion: number};
+	if (id !== currentProgramBrief.id) {
+		ctx.status = 422;
+		ctx.body = {error: 'id cannot be changed'};
+		return await next();
+	}
+
+	let wasm;
+	try {
+		wasm = await getAttachedWasm(ctx);
+	} catch (err) {
+		if (isHttpError(err)) {
+			ctx.status = err.statusCode;
+			ctx.body = {error: err.message};
+			return await next();
+		} else {
+			throw err;
+		}
+	}
+
+	let wasmSourceMap;
+	try {
+		wasmSourceMap = await getAttachedWasmSourceMap(ctx);
+	} catch (err) {
+		if (isHttpError(err)) {
+			ctx.status = err.statusCode;
+			ctx.body = {error: err.message};
+			return await next();
+		} else {
+			throw err;
+		}
+	}
+
+	try {
+		await validateWasmBinary(wasm, apiVersion);
+	} catch (err) {
+		if (err instanceof Error) {
+			ctx.status = 422;
+			ctx.body = {err: err.message};
+			return await next();
+		} else {
+			throw err;
+		}
+	}
+
+	try {
+		await programsMod.update({id, name, apiVersion, wasm, wasmSourceMap});
+	} catch (err) {
+		if (err instanceof UniquenessError) {
+			ctx.status = 422;
+			ctx.body = {
+				error: err.message,
+				field: err.field,
+			};
+			return await next();
+		}
+		throw err;
+	}
+
+	ctx.status = 200;
+	ctx.body = {id, name, apiVersion};
+	await next();
+}
+
+
 export async function compileProgram(ctx: Koa.Context, next: Koa.Next): Promise<void> {
 	const requestSchema = Joi.object({
 		files: Joi.object().pattern(Joi.string(), Joi.string()).required(),

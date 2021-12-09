@@ -10,8 +10,8 @@ import {
 } from './routes/drivers.js';
 import {listLayouts, createLayout} from './routes/layouts.js';
 import {
-	deleteProgram, listPrograms, compileProgram, createProgram, getProgram,
-	getProgramWasm, getProgramWasmSourceMap,
+	deleteProgram, listPrograms, createProgram, getProgram,
+	getProgramWasm, getProgramWasmSourceMap, putProgram,
 } from './routes/programs.js';
 import compose from "koa-compose";
 import multer from "@koa/multer";
@@ -65,6 +65,9 @@ function multipartBodyParser(files: multer.Field[], opts?: bodyParser.Options)
 	const fields = files.concat([{name: 'body', maxCount: 1}]);
 
 	async function parseBody(ctx: DefaultRouterContext, next: Koa.Next) {
+		if (typeof ctx.request.body !== 'object' || !('body' in ctx.request.body)) {
+			ctx.throw(400, 'request requires a JSON payload in the body field');
+		}
 		const {body: bodyJson} = ctx.request.body as {body: string};
 		let body;
 		try {
@@ -99,6 +102,11 @@ let apiRouter = new Router<DefaultState, DefaultContext>({prefix: '/api'})
 	.delete('/programs/:id', deleteProgram)
 	.get('/programs/:id/main.wasm', getProgramWasm)
 	.get('/programs/:id/main.wasm.map', getProgramWasmSourceMap)
+	.put(
+		'/programs/:id',
+		multipartBodyParser([{name: 'wasm', maxCount: 1}, {name: 'wasmSourceMap', maxCount: 1}]),
+		putProgram
+	)
 	.post(
 		'/programs',
 		multipartBodyParser([{name: 'wasm', maxCount: 1}, {name: 'wasmSourceMap', maxCount: 1}]),
