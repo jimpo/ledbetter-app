@@ -87,7 +87,8 @@ test('POST /api/drivers/:id/run-wasm responds with 400 if Wasm file not attached
 		.post(`/api/drivers/${driverId}/run-wasm`)
 		.field('body', JSON.stringify(null));
 	expect(response.status).toBe(400);
-	expect(response.body).toStrictEqual({error: "Request must have a Wasm file attached"});
+	expect(response.body)
+		.toStrictEqual({error: "Request must have a Wasm file attached with name wasm"});
 });
 
 test('POST /api/drivers/:id/run-wasm responds with 200 and driver status', async () => {

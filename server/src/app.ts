@@ -99,8 +99,11 @@ let apiRouter = new Router<DefaultState, DefaultContext>({prefix: '/api'})
 	.delete('/programs/:id', deleteProgram)
 	.get('/programs/:id/main.wasm', getProgramWasm)
 	.get('/programs/:id/main.wasm.map', getProgramWasmSourceMap)
-	.post('/programs', jsonBodyParser, createProgram)
-	.post('/programs/compile', jsonBodyParser, compileProgram);
+	.post(
+		'/programs',
+		multipartBodyParser([{name: 'wasm', maxCount: 1}, {name: 'wasmSourceMap', maxCount: 1}]),
+		createProgram
+	);
 
 if (process.env.NODE_ENV === 'test') {
 	apiRouter

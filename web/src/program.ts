@@ -1,5 +1,6 @@
 import tinycolor from 'tinycolor2';
 import type {PixelLayout} from 'ledbetter-common';
+import {API_VERSION_LATEST, validateWasmModule} from "ledbetter-common/dist/program";
 
 export interface PixelVal {
 	red: number,
@@ -28,9 +29,9 @@ export class WasmProgram {
 	constructor(
 		public layout: PixelLayout,
 		instance: WebAssembly.Instance,
-		_module: WebAssembly.Module,
+		module: WebAssembly.Module,
 	) {
-		// TODO: Validate module function signatures
+		validateWasmModule(module, API_VERSION_LATEST);
 
 		this._tick = getExportedFunction(instance, 'tick') as () => void;
 		this._getPixelVal = getExportedFunction(instance, 'getPixelVal') as

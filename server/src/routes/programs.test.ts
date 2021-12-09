@@ -6,35 +6,20 @@ import {randomUUID} from 'crypto';
 import * as programsMod from '../programs.js';
 import {compile, CompilationResult} from '../programCompiler.js';
 import type {Program} from '../programs.js';
+import {readFileSync} from 'fs';
+import path from "path";
+import {API_VERSION_LATEST} from "ledbetter-common/dist/program";
 
-const TRIVIAL_SOURCE = {
-	'PixelAnimation.ts': `
-import {Pixel} from './mainTypes';
-
-export class PixelAnimation {
-  constructor(private pixels: Pixel[][]) {
-  }
-
-  tick(): void {
-  }
-
-  render(): void {
-  }
-}
-`,
-};
-
+const TEST_WASM_PATH = path.join('..', 'test-programs', 'turnRed.wasm');
+const TEST_WASM = readFileSync(TEST_WASM_PATH);
 
 async function createTestProgram(): Promise<Program> {
-	const result = await compile(TRIVIAL_SOURCE);
 	const program = {
 		id: randomUUID(),
 		name: 'Test',
 		apiVersion: 1,
-		ascVersion: result.ascVersion,
-		sourceCode: TRIVIAL_SOURCE,
-		wasm: result.wasm,
-		wasmSourceMap: result.sourceMap,
+		wasm: TEST_WASM,
+		wasmSourceMap: null,
 	};
 	await programsMod.create(program);
 	return program;
@@ -51,8 +36,6 @@ test('GET /program/:id gets program with source code', async () => {
 		id: program.id,
 		name: program.name,
 		apiVersion: program.apiVersion,
-		ascVersion: program.ascVersion,
-		sourceCode: program.sourceCode,
 	});
 });
 
@@ -76,35 +59,32 @@ test('GET /program/:id/main.wasm.map gets program Wasm source map', async () => 
 	const program = await createTestProgram();
 
 	const response = await request(app.callback())
-		.get(`/api/programs/${program.id}`);
-	expect(response.status).toBe(200);
-	expect(response.get('Content-Type')).toContain('application/json');
-	expect(response.body).toEqual({
-		id: program.id,
-		name: program.name,
-		apiVersion: program.apiVersion,
-		ascVersion: program.ascVersion,
-		sourceCode: program.sourceCode,
-	});
+		.get(`/api/programs/${program.id}/main.wasm.map`);
+	expect(response.status).toBe(404);
+	//expect(response.get('Content-Type')).toContain('application/json');
 });
 
 test('POST /programs creates a program', async () => {
 	const response = await request(app.callback())
 		.post('/api/programs')
-		.send({
-			name: 'Trivial',
-			sourceCode: TRIVIAL_SOURCE,
-		});
+		.field('body', JSON.stringify({name: 'Turn red'}))
+		.attach('wasm', TEST_WASM_PATH, {contentType: 'application/wasm'});
 	expect(response.status).toBe(201);
 	expect(response.body).toMatchObject({
 		id: expect.stringMatching(UUID_REGEX),
-		name: 'Trivial',
-		apiVersion: 1,
-		ascVersion: /^\d+\.\d+\.\d+$/,
+		name: 'Turn red',
+		apiVersion: API_VERSION_LATEST,
 	});
 });
 
-test('POST /programs rejects programs with invalid source', async () => {
+test('POST /programs rejects programs with missing Wasm', async () => {
+	const response = await request(app.callback())
+		.post('/api/programs')
+		.field('body', JSON.stringify({name: 'Turn red'}));
+	expect(response.status).toBe(400);
+});
+
+test.skip('POST /programs rejects programs with invalid Wasm', async () => {
 	const response = await request(app.callback())
 		.post('/api/programs')
 		.send({
@@ -114,26 +94,26 @@ test('POST /programs rejects programs with invalid source', async () => {
 	expect(response.status).toBe(422);
 });
 
-test('POST /programs/compile compiles a program', async () => {
-	const compileResponse = await request(app.callback())
-		.post('/api/programs/compile')
-		.send({files: TRIVIAL_SOURCE});
-	expect(compileResponse.status).toBe(200);
-	const {wasm: wasmB64} = compileResponse.body as {wasm: string, sourceMap: string};
-
-	const wasm = Buffer.from(wasmB64, 'base64');
-	const module = new WebAssembly.Module(wasm);
-	expect(WebAssembly.Module.exports(module))
-		.toEqual(expect.arrayContaining([
-			{ name: 'initLayoutSetNumStrips', kind: 'function' },
-			{ name: 'initLayoutSetStripLen', kind: 'function' },
-			{ name: 'initLayoutSetPixelLoc', kind: 'function' },
-			{ name: 'initLayoutDone', kind: 'function' },
-			{ name: 'tick', kind: 'function' },
-			{ name: 'getPixelVal', kind: 'function' },
-			{ name: 'memory', kind: 'memory' }
-		]));
-});
+// test('POST /programs/compile compiles a program', async () => {
+// 	const compileResponse = await request(app.callback())
+// 		.post('/api/programs/compile')
+// 		.send({files: TRIVIAL_SOURCE});
+// 	expect(compileResponse.status).toBe(200);
+// 	const {wasm: wasmB64} = compileResponse.body as {wasm: string, sourceMap: string};
+//
+// 	const wasm = Buffer.from(wasmB64, 'base64');
+// 	const module = new WebAssembly.Module(wasm);
+// 	expect(WebAssembly.Module.exports(module))
+// 		.toEqual(expect.arrayContaining([
+// 			{ name: 'initLayoutSetNumStrips', kind: 'function' },
+// 			{ name: 'initLayoutSetStripLen', kind: 'function' },
+// 			{ name: 'initLayoutSetPixelLoc', kind: 'function' },
+// 			{ name: 'initLayoutDone', kind: 'function' },
+// 			{ name: 'tick', kind: 'function' },
+// 			{ name: 'getPixelVal', kind: 'function' },
+// 			{ name: 'memory', kind: 'memory' }
+// 		]));
+// });
 
 test('DELETE /program/:id deletes program', async () => {
 	const program = await createTestProgram();

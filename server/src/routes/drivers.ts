@@ -7,8 +7,8 @@ import {LEDDriver} from 'ledbetter-common';
 import * as drivers from '../drivers.js';
 import * as programs from '../programs.js';
 import {getConnectedDrivers} from '../driverManager.js';
-import {type} from "os";
-import multer from "@koa/multer";
+import {getAttachedWasm} from "./common.js";
+import {isHttpError} from "http-errors";
 
 export async function listLEDDrivers(ctx: RouterContext, next: Koa.Next) {
 	let results: LEDDriver[];
@@ -90,23 +90,20 @@ export async function runWasmOnLEDDriver(ctx: RouterContext, next: Koa.Next) {
 		return await next();
 	}
 
-	const files = ctx.request.files as {[p: string]: multer.File[]};
-	const wasmFiles = files['wasm'];
-	if (!wasmFiles) {
-		ctx.status = 400;
-		ctx.body = {error: "Request must have a Wasm file attached"};
-		return await next();
+	let wasm;
+	try {
+		wasm = await getAttachedWasm(ctx);
+	} catch (err) {
+		if (isHttpError(err)) {
+			ctx.status = err.statusCode;
+			ctx.body = {error: err.message};
+			return await next();
+		} else {
+			throw err;
+		}
 	}
 
-	const wasmFile = wasmFiles[0];
-	if (wasmFile.mimetype !== 'application/wasm') {
-		ctx.status = 415;
-		ctx.body = {error: "Attached file must have mimetype application/wasm"};
-		return await next();
-	}
-
-	const wasm = wasmFile.buffer;
-	const status = await driverClient.run(wasm);
+	const status = await driverClient.run(Buffer.from(wasm));
 	ctx.body = {status};
 	await next();
 }

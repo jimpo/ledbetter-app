@@ -23,8 +23,7 @@
 	let nameInput: HTMLInputElement;
 	let bannerError: string | null = null;
 
-	let programWasm: BufferSource | null = null;
-	let programWasmEditor: BufferSource | null = null;
+	let programWasm: ArrayBuffer | null = null;
 
 	let demoStatus: Writable<DriverStatus> = writable('NotPlaying');
 	let driverControl: DriverControl;

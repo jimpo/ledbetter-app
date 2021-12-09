@@ -1,59 +1,44 @@
+import {program as programCommon} from 'ledbetter-common';
+const {API_VERSION_LATEST, validateWasmBinary} = programCommon;
+
 import {randomUUID} from 'crypto';
 import Koa from 'koa';
 import Joi from "joi";
 
 import {CompilationResult, compile} from '../programCompiler.js';
-import {InvalidProgramSourcePathError, CompilationError, UniquenessError} from '../errors.js';
+import {CompilationError, InvalidProgramSourcePathError, UniquenessError} from '../errors.js';
 import * as programsMod from '../programs.js';
-import type {Program} from '../programs.js';
+import {getAttachedWasm, getAttachedWasmSourceMap} from "./common.js";
+import {isHttpError} from "http-errors";
+import {RouterContext} from "@koa/router";
 
 
 export async function listPrograms(ctx: Koa.Context, next: Koa.Next): Promise<void> {
-	const programs = await programsMod.list();
-	ctx.body = programs.map(program => {
-		return {
-			id: program.id,
-			name: program.name,
-			apiVersion: program.apiVersion,
-			ascVersion: program.ascVersion,
-		};
-	});
+	ctx.body = await programsMod.list();
 	await next();
 }
 
 export async function getProgram(ctx: Koa.Context, next: Koa.Next): Promise<void> {
-	const program = await programsMod.get(ctx.params.id);
-	if (!program) {
-		return await next();
+	const programBrief = await programsMod.getBrief(ctx.params.id);
+	if (programBrief) {
+		ctx.body = programBrief;
 	}
-
-	ctx.body = {
-		id: program.id,
-		name: program.name,
-		apiVersion: program.apiVersion,
-		ascVersion: program.ascVersion,
-		sourceCode: program.sourceCode,
-	};
-	await next();
+	return await next();
 }
 
 export async function getProgramWasm(ctx: Koa.Context, next: Koa.Next): Promise<void> {
-	const program = await programsMod.get(ctx.params.id);
-	if (!program) {
-		return await next();
+	const wasm = await programsMod.getWasm(ctx.params.id);
+	if (wasm) {
+		ctx.body = wasm;
 	}
-
-	ctx.body = program.wasm;
 	await next();
 }
 
 export async function getProgramWasmSourceMap(ctx: Koa.Context, next: Koa.Next): Promise<void> {
-	const program = await programsMod.get(ctx.params.id);
-	if (!program) {
-		return await next();
+	const wasmSourceMap = await programsMod.getWasmSourceMap(ctx.params.id);
+	if (wasmSourceMap) {
+		ctx.body = wasmSourceMap;
 	}
-
-	ctx.body = program.wasmSourceMap;
 	await next();
 }
 
@@ -65,13 +50,12 @@ export async function deleteProgram(ctx: Koa.Context, next: Koa.Next): Promise<v
 	await next();
 }
 
-export async function createProgram(ctx: Koa.Context, next: Koa.Next): Promise<void> {
+export async function createProgram(ctx: RouterContext, next: Koa.Next): Promise<void> {
 	const requestSchema = Joi.object({
 		name: Joi.string()
 			.required(),
-		sourceCode: Joi.object()
-			.pattern(Joi.string(), Joi.string().allow(''))
-			.required(),
+		apiVersion: Joi.number()
+			.default(API_VERSION_LATEST),
 	});
 
 	const { value: body, error } = requestSchema.validate(ctx.request.body);
@@ -81,36 +65,49 @@ export async function createProgram(ctx: Koa.Context, next: Koa.Next): Promise<v
 		return await next();
 	}
 
-	const sourceCode = body.sourceCode as {[filePath: string]: string};
+	const {name, apiVersion} = body as {name: string, apiVersion: number};
 
-	let result: CompilationResult;
+	let wasm;
 	try {
-		result = await compile(sourceCode);
+		wasm = await getAttachedWasm(ctx);
 	} catch (err) {
-		if (err instanceof CompilationError) {
-			ctx.status = 422;
-			ctx.body = {error: err.stderr || err.message};
-			return await next();
-		} else if (err instanceof InvalidProgramSourcePathError) {
-			ctx.status = 422;
+		if (isHttpError(err)) {
+			ctx.status = err.statusCode;
 			ctx.body = {error: err.message};
 			return await next();
+		} else {
+			throw err;
 		}
-		throw err;
 	}
 
-	const program: Program = {
-		id: randomUUID(),
-		name: body.name as string,
-		apiVersion: programsMod.API_VERSION_LATEST,
-		ascVersion: result.ascVersion,
-		sourceCode,
-		wasm: result.wasm,
-		wasmSourceMap: result.sourceMap,
-	};
+	let wasmSourceMap;
+	try {
+		wasmSourceMap = await getAttachedWasmSourceMap(ctx);
+	} catch (err) {
+		if (isHttpError(err)) {
+			ctx.status = err.statusCode;
+			ctx.body = {error: err.message};
+			return await next();
+		} else {
+			throw err;
+		}
+	}
 
 	try {
-		await programsMod.create(program);
+		await validateWasmBinary(wasm, apiVersion);
+	} catch (err) {
+		if (err instanceof Error) {
+			ctx.status = 422;
+			ctx.body = {err: err.message};
+			return await next();
+		} else {
+			throw err;
+		}
+	}
+
+	const id = randomUUID();
+	try {
+		await programsMod.create({id, name, apiVersion, wasm, wasmSourceMap});
 	} catch (err) {
 		if (err instanceof UniquenessError) {
 			ctx.status = 422;
@@ -120,17 +117,11 @@ export async function createProgram(ctx: Koa.Context, next: Koa.Next): Promise<v
 			};
 			return await next();
 		}
-
 		throw err;
 	}
 
 	ctx.status = 201;
-	ctx.body = {
-		id: program.id,
-		name: program.name,
-		apiVersion: program.apiVersion,
-		ascVersion: program.ascVersion,
-	};
+	ctx.body = {id, name, apiVersion};
 	await next();
 }
 
