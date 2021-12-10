@@ -1,54 +1,75 @@
 <script lang="ts">
-	import Animation from './Animation.svelte';
-	import type {DriverStatus, Layout, PixelLayout} from 'ledbetter-common';
-	import {useFocus, useParams, Link, navigate} from 'svelte-navigator';
-	import axios from "axios";
-	import {pixelLayout as layoutLib} from "ledbetter-common";
-	import LayoutSelect from './LayoutSelect.svelte';
-	import ProgramCodeEdit from './ProgramCodeEdit.svelte';
-	import ControlButtons from "./ControlButtons.svelte";
+	import {useParams, Link, navigate} from 'svelte-navigator';
+	import axios, {AxiosError} from "axios";
+	import {program as programLib} from "ledbetter-common";
 	import LoadingIcon from "./LoadingIcon.svelte";
-	import {writable} from "svelte/store";
-	import type {Writable} from "svelte/store";
-	import {BrowserAnimationDriver} from "./driverControl";
-	import type {DriverControl} from "./driverControl";
+	import ProgramEdit from "./ProgramEdit.svelte";
+	const {API_VERSION_LATEST, validateWasmBinary} = programLib;
 
-	const registerFocus = useFocus();
 	const params = useParams();
 	const programId = $params.id;
 
-	let layout: Layout | null = null;
-	let pixelLayout: PixelLayout | null;
-
-	let saving = false;
 	let name: string = '';
-	let nameInput: HTMLInputElement;
+	let apiVersion: number = API_VERSION_LATEST;
+	let programWasm: ArrayBuffer | null = null;
+
+	let saving: boolean = false;
 	let bannerError: string | null = null;
-
-	let programWasm: BufferSource | null = null;
-
-	let demoStatus: Writable<DriverStatus> = writable('NotPlaying');
-	let driverControl: DriverControl;
-
-	let programCode = '';
+	let focusNameInput: () => void;
 
 	async function loadProgram() {
-		const response = await axios.get(`/api/programs/${programId}`);
-		name = response.data.name;
-		programCode = response.data.sourceCode['PixelAnimation.ts'];
+		const briefResponse = await axios.get(`/api/programs/${programId}`);
+		name = briefResponse.data.name;
+		apiVersion = briefResponse.data.apiVersion;
+
+		const wasmResponse = await axios.get(
+			`/api/programs/${programId}/main.wasm`,
+			{responseType: 'arraybuffer'}
+		);
+		programWasm = wasmResponse.data;
 	}
 
 	async function handleSave() {
+		if (programWasm === null) {
+			return;
+		}
+		bannerError = null;
+
+		if (/^\s*$/.test(name)) {
+			focusNameInput();
+			return;
+		}
+
+		const formData = new FormData();
+		formData.append('body', JSON.stringify({id: programId, name, apiVersion}));
+		formData.append('wasm', new Blob([programWasm], {type: 'application/wasm'}));
+
+		saving = true;
+		try {
+			await axios.put(`/api/programs/${programId}`, formData);
+		} catch (untypedErr) {
+			const err = untypedErr as AxiosError;
+			if (
+				err.response.status === 422 &&
+				err.response.data instanceof Object &&
+				'error' in err.response.data &&
+				typeof err.response.data.error === 'string'
+			)
+			{
+				let {error: errMessage} = err.response.data;
+				bannerError = errMessage
+			}
+			saving = false;
+			return;
+		}
+
+		navigate('/');
 	}
 
 	async function handleDelete() {
 		await axios.delete(`/api/programs/${programId}`);
 		navigate('/');
 	}
-
-	loadProgram();
-	$: pixelLayout = layout ? layoutLib.parseCode(layout.sourceCode) : null;
-	$: driverControl = new BrowserAnimationDriver(layout, programWasm, demoStatus);
 </script>
 
 <style>
@@ -79,9 +100,9 @@
 				title="Delete"
 				on:click|preventDefault={handleDelete}
 			>
-			<span class="icon">
-				<i class="fas fa-trash-alt"></i>
-			</span>
+				<span class="icon">
+					<i class="fas fa-trash-alt"></i>
+				</span>
 			</button>
 		</div>
 
@@ -93,40 +114,13 @@
 			</ul>
 		</nav>
 
-		{#if bannerError}
-			<div class="notification is-danger">
-				<button class="delete" on:click|preventDefault={() => bannerError = null}></button>
-				{bannerError}
-			</div>
-		{/if}
-
-		<div class="block">
-			<input
-				bind:this={nameInput}
-				bind:value={name}
-				use:registerFocus
-				disabled={saving}
-				class="input is-large"
-				type="text"
-				placeholder="Program name..."
-			/>
-		</div>
-
-		<div class="block">
-			<ProgramCodeEdit {programCode} bind:programWasm={programWasm} disabled={saving} />
-		</div>
-
-		<div class="block">
-			<Animation aspectRatio={1} layout={pixelLayout} {programWasm} status={$demoStatus} />
-		</div>
-
-		<div class="columns">
-			<div class="column is-one-quarter">
-				<LayoutSelect bind:layout={layout} />
-			</div>
-			<div class="column">
-				<ControlButtons status={$demoStatus} {driverControl} />
-			</div>
-		</div>
+		<ProgramEdit
+			bind:name
+			bind:apiVersion
+			bind:programWasm
+			bind:saving
+			bind:bannerError
+			bind:focusNameInput
+		/>
 	{/await}
 </div>

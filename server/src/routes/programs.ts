@@ -186,7 +186,7 @@ export async function putProgram(ctx: RouterContext, next: Koa.Next): Promise<vo
 	} catch (err) {
 		if (err instanceof Error) {
 			ctx.status = 422;
-			ctx.body = {err: err.message};
+			ctx.body = {error: `Invalid Wasm program: ${err.message}`};
 			return await next();
 		} else {
 			throw err;

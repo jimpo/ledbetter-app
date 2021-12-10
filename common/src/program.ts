@@ -15,6 +15,7 @@ const API_V1_REQUIRED_EXPORTS: WebAssembly.ModuleExportDescriptor[] = [
 const API_V1_SUPPORTED_IMPORTS: WebAssembly.ModuleImportDescriptor[] = [
 	{module: 'env', name: 'abort', kind: 'function'},
 	{module: 'env', name: 'seed', kind: 'function'},
+	{module: 'colorConvert', name: 'hsvToRgbEncoded', kind: 'function'},
 ];
 
 export interface ProgramBrief {
