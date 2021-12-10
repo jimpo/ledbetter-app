@@ -1,12 +1,11 @@
 <script lang="ts">
+	import LayoutEdit from "./LayoutEdit.svelte";
+
 	import axios, {AxiosError, AxiosResponse} from 'axios';
-	import Animation from './Animation.svelte';
-	import {layout as layoutLib, pixelLayout, PixelLayout, ProgramBrief} from 'ledbetter-common';
-	import {useFocus, Link} from 'svelte-navigator';
+	import {layout as layoutLib, PixelLayout, ProgramBrief} from 'ledbetter-common';
+	import {Link} from 'svelte-navigator';
 	import type {NavigateFn} from 'svelte-navigator';
 	import Joi from "joi";
-
-	const registerFocus = useFocus();
 
 	export let navigate: NavigateFn;
 
@@ -23,20 +22,11 @@ SEGMENT 150 pixels
 `;
 	let layoutCode = SAMPLE_LAYOUT_CODE;
 	let layout: PixelLayout | null  = null;
-	let layoutCodeError: Error | null;
-	$: {
-		try {
-			layout = pixelLayout.parseCode(layoutCode);
-			layoutCodeError = null;
-		} catch (err) {
-			layout = null;
-			layoutCodeError = err;
-		}
-	}
+	let focusNameInput: () => void;
+	let bannerError: string | null = null;
+
 	let creating = false;
 	let name: string = '';
-	let nameInput: HTMLInputElement;
-	let bannerError: string | null = null;
 
 	async function handleCreate(): Promise<void> {
 		if (layout === null) {
@@ -45,7 +35,7 @@ SEGMENT 150 pixels
 		bannerError = null;
 
 		if (/^\s*$/.test(name)) {
-			nameInput.focus();
+			focusNameInput();
 			return;
 		}
 
@@ -73,22 +63,6 @@ SEGMENT 150 pixels
 </script>
 
 <style>
-	textarea.layout-code-edit {
-		font-family: monospace;
-	  max-height: none;
-	}
-	textarea.layout-code-edit.layout-code-valid {
-		height: 100%;
-	}
-	textarea.layout-code-edit.layout-code-invalid {
-	  height: 65%;
-	}
-	textarea.layout-code-error {
-		height: 35%;
-		font-family: monospace;
-		background-color: #f5f5f5;
-	}
-
 	.action-buttons {
 		float: right;
 	}
@@ -117,44 +91,12 @@ SEGMENT 150 pixels
 		</ul>
 	</nav>
 
-	{#if bannerError}
-		<div class="notification is-danger">
-			<button class="delete" on:click|preventDefault={() => bannerError = null}></button>
-			{bannerError}
-		</div>
-	{/if}
-
-	<div class="block">
-		<input
-				bind:this={nameInput}
-				bind:value={name}
-				use:registerFocus
-				disabled={creating}
-				class="input is-large"
-				type="text"
-				placeholder="Layout name..."
-		/>
-	</div>
-
-	<div class="columns">
-		<div class="column is-three-quarters">
-			<Animation aspectRatio={1} {layout} />
-		</div>
-		<div class="column">
-      <textarea
-				class="textarea has-fixed-size layout-code-edit"
-				class:layout-code-valid={layoutCodeError === null}
-				class:layout-code-invalid={layoutCodeError !== null}
-				bind:value={layoutCode}
-				disabled={creating}
-			/>
-			{#if layoutCodeError !== null}
-      <textarea
-				class="textarea layout-code-error has-fixed-size is-danger"
-				readonly>
-			  {layoutCodeError.message}
-			</textarea>
-			{/if}
-		</div>
-	</div>
+	<LayoutEdit
+		bind:name
+		bind:layout
+		bind:layoutCode
+		bind:focusNameInput
+		bind:bannerError
+		bind:saving={creating}
+	/>
 </div>

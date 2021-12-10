@@ -9,12 +9,14 @@
 	import NewLayout from './NewLayout.svelte';
 	import NewProgram from './NewProgram.svelte';
 	import ShowProgram from './ShowProgram.svelte';
+	import ShowLayout from './ShowLayout.svelte';
 </script>
 
 <main class="section">
 	<Router>
 		<Route path="/" component={DemoProgram}/>
 		<Route path="layouts/new" component={NewLayout}/>
+		<Route path="layouts/:layoutId" component={ShowLayout}/>
 		<Route path="programs/new" component={NewProgram}/>
 		<Route path="programs/:programId" component={ShowProgram}/>
 	</Router>

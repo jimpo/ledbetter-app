@@ -5,7 +5,7 @@
 	import {Layout, program as programLib} from "ledbetter-common";
 	import LoadingIcon from "./LoadingIcon.svelte";
 	import ProgramEdit from "./ProgramEdit.svelte";
-	const {API_VERSION_LATEST, validateWasmBinary} = programLib;
+	const {API_VERSION_LATEST} = programLib;
 
 	export let programId: string;
 	export let location: NavigatorLocation<{layout?: Layout | null}>;
@@ -95,9 +95,9 @@
 				disabled={programWasm === null}
 				on:click|preventDefault={handleSave}
 			>
-			<span class="icon">
-				<i class="fas fa-save"></i>
-			</span>
+				<span class="icon">
+					<i class="fas fa-save"></i>
+				</span>
 			</button>
 			<button
 				class="button is-small is-outlined is-danger"
@@ -115,7 +115,7 @@
 			<ul>
 				<li><Link to="/">LEDBetter Lights</Link></li>
 				<li class="is-active"><Link to="">Programs</Link></li>
-				<li class="is-active"><Link to="" aria-current="page">{name}</Link></li>
+				<li class="is-active"><Link to={`/programs/${programId}`} aria-current="page">{name}</Link></li>
 			</ul>
 		</nav>
 

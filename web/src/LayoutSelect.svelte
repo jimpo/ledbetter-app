@@ -38,6 +38,11 @@
 	selected={selectedOption}
 	on:select={({detail}) => onSelect(detail)}
 >
+	{#if layout}
+		<Link class="dropdown-item" to={`/layouts/${layout.id}`}>
+			Show Details
+		</Link>
+	{/if}
 	<Link class="dropdown-item" to="/layouts/new">Create new layout</Link>
 	<hr class="dropdown-divider"/>
 </FancySelect>

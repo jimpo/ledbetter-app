@@ -5,7 +5,7 @@
 		program as programLib,
 	} from 'ledbetter-common';
 	import {useFocus} from 'svelte-navigator';
-	import type {NavigateFn, NavigatorLocation} from 'svelte-navigator';
+	import type {NavigatorLocation} from 'svelte-navigator';
 	import Animation from './Animation.svelte';
 	import LayoutSelect from './LayoutSelect.svelte';
 	import ProgramSelect from './ProgramSelect.svelte';
@@ -26,7 +26,7 @@
 		programWasm?: ArrayBuffer | null,
 		layout?: Layout | null,
 	}>;
-	export let navigate: NavigateFn;
+	//export let navigate: NavigateFn;
 
 	let programBrief: ProgramBrief | null = location.state?.programBrief || null;
 	let programWasm: ArrayBuffer | null = location.state?.programWasm || null;

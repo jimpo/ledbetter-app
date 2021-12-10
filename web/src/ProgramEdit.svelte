@@ -3,6 +3,7 @@
 	import ControlButtons from './ControlButtons.svelte';
 	import LayoutSelect from './LayoutSelect.svelte';
 	import WasmDropZone from "./WasmDropZone.svelte";
+	import ErrorBanner from "./ErrorBanner.svelte";
 
 	import {BrowserAnimationDriver} from "./driverControl";
 	import type {DriverControl} from "./driverControl";
@@ -38,19 +39,21 @@
 
 	async function handleWasmFile(file: File | undefined) {
 		bannerError = '';
+		wasmFileName = null;
+		programWasm = null;
 		if (!file) {
-			wasmFileName = null;
 			return;
 		}
 
 		if (file.type !== 'application/wasm') {
 			bannerError = 'File must be a WebAssembly binary';
-			wasmFileName = null;
 			return;
 		}
+
+		apiVersion = API_VERSION_LATEST;
 		let wasm = await file.arrayBuffer();
 		try {
-			await validateWasmBinary(wasm, API_VERSION_LATEST);
+			await validateWasmBinary(wasm, apiVersion);
 		} catch (err) {
 			if (err instanceof Error) {
 				bannerError = `Module is not valid: ${err.message}`;
@@ -91,12 +94,7 @@
 	}
 </script>
 
-{#if bannerError}
-	<div class="notification is-danger">
-		<button class="delete" on:click|preventDefault={() => bannerError = null}></button>
-		{bannerError}
-	</div>
-{/if}
+<ErrorBanner bind:errorMessage={bannerError} />
 
 <div class="block">
 	<input

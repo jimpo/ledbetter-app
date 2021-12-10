@@ -5,7 +5,7 @@
 	import {Layout, program as programLib, ProgramBrief} from "ledbetter-common";
 	import ProgramEdit from "./ProgramEdit.svelte";
 	import Joi from "joi";
-	const {API_VERSION_LATEST, validateWasmBinary, programBriefSchema} = programLib;
+	const {API_VERSION_LATEST, programBriefSchema} = programLib;
 
 	export let location: NavigatorLocation<{programWasm?: ArrayBuffer | null, layout?: Layout | null}>;
 	export let navigate: NavigateFn;
