@@ -1,3 +1,5 @@
+/** Logic for sending run, play, pause, stop, etc. commands to drivers */
+
 import type {Writable} from 'svelte/store';
 import type {DriverStatus, Layout} from 'ledbetter-common';
 import axios, {AxiosResponse} from "axios";

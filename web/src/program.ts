@@ -1,3 +1,5 @@
+/** Logic for in-browser program execution */
+
 import tinycolor from 'tinycolor2';
 import type {PixelLayout} from 'ledbetter-common';
 import {API_VERSION_LATEST, validateWasmModule} from "ledbetter-common/dist/program";

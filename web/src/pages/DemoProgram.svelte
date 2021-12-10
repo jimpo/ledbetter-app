@@ -6,16 +6,16 @@
 	} from 'ledbetter-common';
 	import {useFocus} from 'svelte-navigator';
 	import type {NavigatorLocation} from 'svelte-navigator';
-	import Animation from './Animation.svelte';
-	import LayoutSelect from './LayoutSelect.svelte';
-	import ProgramSelect from './ProgramSelect.svelte';
-	import DriverSelect from './DriverSelect.svelte';
-	import ControlButtons from "./ControlButtons.svelte";
+	import Animation from '../components/Animation.svelte';
+	import LayoutSelect from '../components/LayoutSelect.svelte';
+	import ProgramSelect from '../components/ProgramSelect.svelte';
+	import DriverSelect from '../components/DriverSelect.svelte';
+	import ControlButtons from "../components/ControlButtons.svelte";
 	import type {Writable} from "svelte/store";
 	import {writable} from "svelte/store";
-	import type {DriverControl} from "./driverControl";
-	import {BrowserAnimationDriver, ExternalDriver} from "./driverControl";
-	import WasmDropZone from "./WasmDropZone.svelte";
+	import type {DriverControl} from "../driverControl";
+	import {BrowserAnimationDriver, ExternalDriver} from "../driverControl";
+	import WasmDropZone from "../components/WasmDropZone.svelte";
 	import {tick} from "svelte";
 	const {API_VERSION_LATEST, validateWasmBinary} = programLib;
 

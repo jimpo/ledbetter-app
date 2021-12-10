@@ -1,6 +1,6 @@
 <script lang="ts">
-	import LayoutEdit from "./LayoutEdit.svelte";
-	import LoadingIcon from "./LoadingIcon.svelte";
+	import LayoutEdit from "../components/LayoutEdit.svelte";
+	import LoadingIcon from "../components/LoadingIcon.svelte";
 
 	import type {Layout, PixelLayout} from "ledbetter-common";
 	import axios, {AxiosError, AxiosResponse} from "axios";

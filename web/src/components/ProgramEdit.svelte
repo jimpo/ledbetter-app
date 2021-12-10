@@ -5,8 +5,8 @@
 	import WasmDropZone from "./WasmDropZone.svelte";
 	import ErrorBanner from "./ErrorBanner.svelte";
 
-	import {BrowserAnimationDriver} from "./driverControl";
-	import type {DriverControl} from "./driverControl";
+	import {BrowserAnimationDriver} from "../driverControl";
+	import type {DriverControl} from "../driverControl";
 	import {useFocus} from "svelte-navigator";
 	import {DriverStatus, Layout, PixelLayout, pixelLayout as layoutLib, program as programLib} from "ledbetter-common";
 	import {writable} from 'svelte/store';

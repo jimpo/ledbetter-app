@@ -3,8 +3,8 @@
 	import type {NavigatorLocation, NavigateFn} from 'svelte-navigator';
 	import axios, {AxiosError} from "axios";
 	import {Layout, program as programLib} from "ledbetter-common";
-	import LoadingIcon from "./LoadingIcon.svelte";
-	import ProgramEdit from "./ProgramEdit.svelte";
+	import LoadingIcon from "../components/LoadingIcon.svelte";
+	import ProgramEdit from "../components/ProgramEdit.svelte";
 	const {API_VERSION_LATEST} = programLib;
 
 	export let programId: string;

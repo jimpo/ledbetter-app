@@ -1,5 +1,5 @@
 <script lang="ts">
-	import LayoutEdit from "./LayoutEdit.svelte";
+	import LayoutEdit from "../components/LayoutEdit.svelte";
 
 	import axios, {AxiosError, AxiosResponse} from 'axios';
 	import {layout as layoutLib, PixelLayout, ProgramBrief} from 'ledbetter-common';

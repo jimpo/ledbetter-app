@@ -1,6 +1,6 @@
 <script lang="ts">
 	import {createEventDispatcher} from 'svelte';
-	import type {Option} from './types';
+	import type {Option} from '../types';
 
 	export let defaultLabel: string = '';
 	export let searchPlaceholder: string;

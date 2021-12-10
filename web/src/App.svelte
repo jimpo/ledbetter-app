@@ -5,11 +5,11 @@
 	import '@fortawesome/fontawesome-free/scss/regular.scss';
 	import '@fortawesome/fontawesome-free/scss/fontawesome.scss';
 
-	import DemoProgram from './DemoProgram.svelte';
-	import NewLayout from './NewLayout.svelte';
-	import NewProgram from './NewProgram.svelte';
-	import ShowProgram from './ShowProgram.svelte';
-	import ShowLayout from './ShowLayout.svelte';
+	import DemoProgram from './pages/DemoProgram.svelte';
+	import NewLayout from './pages/NewLayout.svelte';
+	import NewProgram from './pages/NewProgram.svelte';
+	import ShowProgram from './pages/ShowProgram.svelte';
+	import ShowLayout from './pages/ShowLayout.svelte';
 </script>
 
 <main class="section">

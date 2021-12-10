@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type {DriverStatus} from 'ledbetter-common';
-	import type {DriverControl} from "./driverControl";
+	import type {DriverControl} from "../driverControl";
 
 	export let status: DriverStatus;
 	export let driverControl: DriverControl;

@@ -3,7 +3,7 @@
 	import type {NavigatorLocation, NavigateFn} from 'svelte-navigator';
 	import axios, {AxiosError, AxiosResponse} from "axios";
 	import {Layout, program as programLib, ProgramBrief} from "ledbetter-common";
-	import ProgramEdit from "./ProgramEdit.svelte";
+	import ProgramEdit from "../components/ProgramEdit.svelte";
 	import Joi from "joi";
 	const {API_VERSION_LATEST, programBriefSchema} = programLib;
 

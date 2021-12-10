@@ -2,7 +2,7 @@
 	import axios from 'axios';
 	import {Link} from 'svelte-navigator';
 	import type {LEDDriver} from 'ledbetter-common';
-	import type {Option} from './types';
+	import type {Option} from '../types';
 	import FancySelect from './FancySelect.svelte';
 	import {createEventDispatcher} from "svelte";
 

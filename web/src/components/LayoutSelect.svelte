@@ -2,7 +2,7 @@
 	import axios from 'axios';
 	import {Link} from 'svelte-navigator';
 	import type {Layout} from 'ledbetter-common';
-	import type {Option} from './types';
+	import type {Option} from '../types';
 	import FancySelect from './FancySelect.svelte';
 
 	export let layout: Layout | null;

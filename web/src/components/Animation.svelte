@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type {Program, PixelVal} from './program';
-	import {createWasmProgram, TrivialProgram} from './program';
+	import type {Program, PixelVal} from '../program';
+	import {createWasmProgram, TrivialProgram} from '../program';
 	import {DriverStatus, PixelLayout} from 'ledbetter-common';
 
 	export let aspectRatio: number = 1;
