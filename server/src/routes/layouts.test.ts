@@ -4,7 +4,44 @@ import app from '../app.js';
 import {Layout} from 'ledbetter-common';
 
 import {UUID_REGEX} from '../../test/util.js';
+import {randomUUID} from "crypto";
+import * as layoutsDb from '../layouts';
 
+async function createTestLayout(): Promise<Layout> {
+	const layout = {
+		id: randomUUID(),
+		name: 'Test',
+		sourceCode:
+`SET PIXELS_PER_METER 60
+
+STRIP AT -1m, 0m
+TURN 90 degrees
+SEGMENT 150 pixels
+
+STRIP AT 1m, 0m
+TURN 90 degrees
+SEGMENT 150 pixels
+`,
+	};
+	await layoutsDb.create(layout);
+	return layout;
+}
+
+test('GET /api/layouts/:id gets layout', async () => {
+	const layout = await createTestLayout();
+
+	const response = await request(app.callback())
+		.get(`/api/layouts/${layout.id}`);
+	expect(response.status).toBe(200);
+	expect(response.get('Content-Type')).toContain('application/json');
+	expect(response.body).toEqual(layout);
+});
+
+test('GET /api/layouts/:id 404s on unknown layout ID', async () => {
+	const response = await request(app.callback())
+		.get(`/api/layouts/${randomUUID()}`);
+	expect(response.status).toBe(404);
+});
 
 test('POST /api/layouts creates a new layout', async () => {
     const layoutProps = {

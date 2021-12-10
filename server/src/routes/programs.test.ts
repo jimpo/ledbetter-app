@@ -4,7 +4,6 @@ import app from '../app.js';
 import {UUID_REGEX} from '../../test/util.js';
 import {randomUUID} from 'crypto';
 import * as programsMod from '../programs.js';
-import {compile, CompilationResult} from '../programCompiler.js';
 import type {Program} from '../programs.js';
 import {readFileSync} from 'fs';
 import path from "path";

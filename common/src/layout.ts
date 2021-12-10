@@ -6,7 +6,7 @@ export interface Layout {
 	sourceCode: string,
 }
 
-export const layoutSchema = Joi.object({
+export const layoutSchema = Joi.object<Layout>({
 	id: Joi.string().uuid().required(),
 	name: Joi.string().required(),
 	sourceCode: Joi.string().required(),

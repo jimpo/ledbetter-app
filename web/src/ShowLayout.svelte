@@ -2,11 +2,13 @@
 	import LayoutEdit from "./LayoutEdit.svelte";
 	import LoadingIcon from "./LoadingIcon.svelte";
 
-	import type {PixelLayout} from "ledbetter-common";
-	import axios from "axios";
+	import type {Layout, PixelLayout} from "ledbetter-common";
+	import axios, {AxiosError, AxiosResponse} from "axios";
 
 	import {Link} from "svelte-navigator";
 	import type {NavigateFn} from 'svelte-navigator';
+	import Joi from "joi";
+	import {layout as layoutLib} from "ledbetter-common";
 
 	export let layoutId: string;
 	export let navigate: NavigateFn;
@@ -26,6 +28,39 @@
 	}
 
 	async function handleSave() {
+		if (layout === null) {
+			return;
+		}
+		bannerError = null;
+
+		if (/^\s*$/.test(name)) {
+			focusNameInput();
+			return;
+		}
+
+		saving = true;
+
+		let response: AxiosResponse;
+		try {
+			response = await axios.put(
+				`/api/layouts/${layoutId}`,
+				{id: layoutId, name, sourceCode: layoutCode}
+			);
+		} catch (untypedErr) {
+			const err = untypedErr as AxiosError;
+			if (err.response.status === 422 &&
+				err.response.data instanceof Object &&
+				err.response.data.hasOwnProperty('error'))
+			{
+				let {error: errMessage} = err.response.data as {error: string};
+				bannerError = errMessage
+			}
+			saving = false;
+			return;
+		}
+
+		const newLayout = Joi.attempt(response.data, layoutLib.layoutSchema) as Layout;
+		navigate('/', {state: {layout: newLayout}});
 	}
 
 	async function handleDelete() {

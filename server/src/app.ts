@@ -8,7 +8,7 @@ import {
 	listLEDDrivers, createLEDDriver, runProgramOnLEDDriver, runWasmOnLEDDriver, playLEDDriver,
 	pauseLEDDriver, stopLEDDriver,
 } from './routes/drivers.js';
-import {listLayouts, createLayout} from './routes/layouts.js';
+import {listLayouts, createLayout, getLayout, putLayout, deleteLayout} from './routes/layouts.js';
 import {
 	deleteProgram, listPrograms, createProgram, getProgram,
 	getProgramWasm, getProgramWasmSourceMap, putProgram,
@@ -96,7 +96,10 @@ let apiRouter = new Router<DefaultState, DefaultContext>({prefix: '/api'})
 	.post('/drivers/:id/pause', jsonBodyParser, pauseLEDDriver)
 	.post('/drivers/:id/stop', jsonBodyParser, stopLEDDriver)
 	.get('/layouts', listLayouts)
+	.get('/layouts/:id', getLayout)
 	.post('/layouts', jsonBodyParser, createLayout)
+	.put('/layouts/:id', jsonBodyParser, putLayout)
+	.delete('/layouts/:id', deleteLayout)
 	.get('/programs', listPrograms)
 	.get('/programs/:id', getProgram)
 	.delete('/programs/:id', deleteProgram)
