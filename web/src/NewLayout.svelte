@@ -1,10 +1,14 @@
 <script lang="ts">
-	import axios, {AxiosError} from 'axios';
+	import axios, {AxiosError, AxiosResponse} from 'axios';
 	import Animation from './Animation.svelte';
-	import {pixelLayout, PixelLayout} from 'ledbetter-common';
-	import {useFocus, Link, navigate} from 'svelte-navigator';
+	import {layout as layoutLib, pixelLayout, PixelLayout, ProgramBrief} from 'ledbetter-common';
+	import {useFocus, Link} from 'svelte-navigator';
+	import type {NavigateFn} from 'svelte-navigator';
+	import Joi from "joi";
 
 	const registerFocus = useFocus();
+
+	export let navigate: NavigateFn;
 
 	const SAMPLE_LAYOUT_CODE =
 		`SET PIXELS_PER_METER 60
@@ -47,8 +51,9 @@ SEGMENT 150 pixels
 
 		creating = true;
 
+		let response: AxiosResponse;
 		try {
-			await axios.post('/api/layouts', {name, sourceCode: layoutCode});
+			response = await axios.post('/api/layouts', {name, sourceCode: layoutCode});
 		} catch (untypedErr) {
 			const err = untypedErr as AxiosError;
 			if (err.response.status === 422 &&
@@ -62,36 +67,52 @@ SEGMENT 150 pixels
 			return;
 		}
 
-		navigate('/layouts');
+		const newLayout = Joi.attempt(response.data, layoutLib.layoutSchema) as ProgramBrief;
+		navigate('/', {state: {layout: newLayout}});
 	}
 </script>
 
 <style>
-	.layout-code-edit {
+	textarea.layout-code-edit {
 		font-family: monospace;
+	  max-height: none;
 	}
-	.layout-code-edit.layout-code-valid {
-		height: 640px;
+	textarea.layout-code-edit.layout-code-valid {
+		height: 100%;
 	}
-	.layout-code-edit.layout-code-invalid {
-		height: 320px;
+	textarea.layout-code-edit.layout-code-invalid {
+	  height: 65%;
 	}
-	.layout-code-error {
-		height: 320px;
+	textarea.layout-code-error {
+		height: 35%;
 		font-family: monospace;
 		background-color: #f5f5f5;
 	}
 
 	.action-buttons {
-		text-align: right;
+		float: right;
 	}
 </style>
 
 <div class="container">
-	<nav class="breadcrumb" aria-label="breadcrumbs">
+	<div class="action-buttons">
+		<button
+			class="button is-small is-primary is-outlined"
+			class:is-loading={creating}
+			title="Create"
+			disabled={layout === null}
+			on:click|preventDefault={handleCreate}
+		>
+			<span class="icon">
+				<i class="fas fa-check"></i>
+			</span>
+		</button>
+	</div>
+
+	<nav class="breadcrumb is-medium" aria-label="breadcrumbs">
 		<ul>
 			<li><Link to="/">LEDBetter Lights</Link></li>
-			<li>Layouts</li>
+			<li class="is-active"><Link to="">Layouts</Link></li>
 			<li class="is-active"><Link to="/layouts/new" aria-current="page">New</Link></li>
 		</ul>
 	</nav>
@@ -104,35 +125,15 @@ SEGMENT 150 pixels
 	{/if}
 
 	<div class="block">
-		<div class="columns">
-			<div class="column is-three-quarters">
-				{#if !creating}
-					<input
-							bind:this={nameInput}
-							bind:value={name}
-							use:registerFocus
-							class="input is-large"
-							type="text"
-							placeholder="Layout name..."
-					/>
-				{:else}
-					<h1 class="title is-1">{name}</h1>
-				{/if}
-			</div>
-			<div class="column action-buttons">
-				<button
-						class="button is-large is-primary is-outlined"
-						class:is-loading={creating}
-						title="Create"
-						disabled={layout === null ? true : null}
-						on:click|preventDefault={handleCreate}
-				>
-          <span class="icon">
-            <i class="fas fa-check"></i>
-          </span>
-				</button>
-			</div>
-		</div>
+		<input
+				bind:this={nameInput}
+				bind:value={name}
+				use:registerFocus
+				disabled={creating}
+				class="input is-large"
+				type="text"
+				placeholder="Layout name..."
+		/>
 	</div>
 
 	<div class="columns">
@@ -145,7 +146,7 @@ SEGMENT 150 pixels
 				class:layout-code-valid={layoutCodeError === null}
 				class:layout-code-invalid={layoutCodeError !== null}
 				bind:value={layoutCode}
-				disabled={creating ? true : null}
+				disabled={creating}
 			/>
 			{#if layoutCodeError !== null}
       <textarea

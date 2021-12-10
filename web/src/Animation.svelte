@@ -101,8 +101,11 @@
 </script>
 
 <style>
+	svg {
+	  display: block;
+  }
 	circle {
-			mix-blend-mode: lighten;
+	  mix-blend-mode: lighten;
 	}
 </style>
 

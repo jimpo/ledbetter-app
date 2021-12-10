@@ -40,6 +40,20 @@ SEGMENT 150 pixels
     expect(responseLayouts).toStrictEqual([responseLayout]);
 });
 
+test('POST /api/layouts responds with 422 on invalid layout', async () => {
+	const layoutProps = {
+		name: "Living Room Center",
+		sourceCode: "SET PIXELS_PER_METER SEVENTY SEVEN ELEVEN",
+	};
+
+	const createResponse = await request(app.callback())
+		.post('/api/layouts')
+		.send(layoutProps);
+	expect(createResponse.status).toBe(422);
+	expect(createResponse.body)
+		.toMatchObject({error: expect.stringMatching(/Invalid code/)});
+});
+
 test('POST /api/layouts returns error on duplicate name', async () => {
     const layoutProps = {
         name: "Living Room Center",

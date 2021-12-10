@@ -72,3 +72,27 @@ test('pixelLocs is computed correcty', () => {
 	});
 	expect(strip.pixelLocs.length).toEqual(30);
 });
+
+test('parseCode with fractional distances', () => {
+	const program = `
+SET PIXELS_PER_METER 60
+STRIP AT 0.1m, -10m
+TURN 30 degrees
+SEGMENT 300 pixels
+`;
+	const results = parseCode(program);
+	const expectedLayout = new PixelLayout([
+		new PixelLayoutStrip({
+			pixelsPerMeter: 60,
+			startXMeters: 0.1,
+			startYMeters: -10,
+			segments: [
+				{
+					directionDegrees: 30,
+					lengthPixels: 300,
+				},
+			],
+		}),
+	]);
+	expect(results).toEqual(expectedLayout);
+});

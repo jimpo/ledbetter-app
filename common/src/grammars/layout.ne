@@ -23,15 +23,17 @@ main -> (statement):+ {%
 statement ->
     _ %NL {% (_) => null %}
   | "SET" __ "PIXELS_PER_METER" __ float _ %NL
-      {% (t) => {return { statement: "set_pixels_per_meter", value: t[4][0] }} %}
+      {% (t) => {return { statement: "set_pixels_per_meter", value: t[4] }} %}
   | "STRIP" __ "AT" __ float "m" _ %comma _ float "m" _ %NL
-      {% (t) => {return { statement: "strip", x: t[4][0], y: t[9][0] }} %}
-  | "TURN" __ int __ "degrees" _ %NL
+      {% (t) => {return { statement: "strip", x: t[4], y: t[9] }} %}
+  | "TURN" __ float __ "degrees" _ %NL
       {% (t) => {return { statement: "turn", degrees: t[2] }} %}
   | "SEGMENT" __ int __ "pixels" _ %NL
       {% (t) => {return { statement: "segment", nPixels: t[2] }} %}
 
 int -> %int {% (t) => parseInt(t[0]) %}
-float -> int | %decimal {% (t) => parseFloat(t[0]) %}
+float ->
+    %int {% (t) => parseFloat(t[0]) %}
+  | %decimal {% (t) => parseFloat(t[0]) %}
 __ -> %WS {% (_) => null %}
 _ -> __ | null

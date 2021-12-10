@@ -4,6 +4,7 @@ import Joi from 'joi';
 
 import * as layouts from '../layouts.js';
 import {UniquenessError} from '../errors.js';
+import {pixelLayout} from 'ledbetter-common';
 
 export async function listLayouts(ctx: Context, next: Koa.Next) {
 	ctx.body = await layouts.list();
@@ -30,7 +31,18 @@ export async function createLayout(ctx: Context, next: Koa.Next) {
 		name: body.name as string,
 		sourceCode: body.sourceCode as string,
 	};
-	// TODO: Actually validate by parsing sourceCode
+
+	try {
+		pixelLayout.parseCode(layout.sourceCode);
+	} catch (err) {
+		if (err instanceof Error) {
+			ctx.status = 422;
+			ctx.body = {error: `Invalid code: ${err.message}`};
+			return await next();
+		}
+		return;
+	}
+
 	try {
 		await layouts.create(layout);
 	} catch (err) {
