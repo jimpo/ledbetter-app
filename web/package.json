@@ -21,6 +21,7 @@
 		"axios": "^0.21.4",
 		"bulma": "^0.9.3",
 		"jest": "^27.2.5",
+		"joi": "^17.5.0",
 		"ledbetter-common": "file:../common",
 		"rollup": "^2.3.4",
 		"rollup-plugin-copy": "^3.4.0",

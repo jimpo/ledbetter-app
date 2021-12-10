@@ -1,4 +1,5 @@
 import deepEqual from 'deep-equal';
+import Joi from 'joi';
 
 export const API_VERSION_LATEST: number = 1;
 
@@ -23,6 +24,12 @@ export interface ProgramBrief {
 	name: string,
 	apiVersion: number,
 }
+
+export const programBriefSchema = Joi.object<ProgramBrief>({
+	id: Joi.string().uuid().required(),
+	name: Joi.string().required(),
+	apiVersion: Joi.number().required(),
+});
 
 export async function validateWasmBinary(wasm: ArrayBuffer, apiVersion: number): Promise<void> {
 	const module = await WebAssembly.compile(wasm);

@@ -1,17 +1,23 @@
 <script lang="ts">
-	import {Link, navigate} from 'svelte-navigator';
-	import axios, {AxiosError} from "axios";
-	import {program as programLib} from "ledbetter-common";
+	import {Link} from 'svelte-navigator';
+	import type {NavigatorLocation, NavigateFn} from 'svelte-navigator';
+	import axios, {AxiosError, AxiosResponse} from "axios";
+	import {Layout, program as programLib, ProgramBrief} from "ledbetter-common";
 	import ProgramEdit from "./ProgramEdit.svelte";
-	const {API_VERSION_LATEST, validateWasmBinary} = programLib;
+	import Joi from "joi";
+	const {API_VERSION_LATEST, validateWasmBinary, programBriefSchema} = programLib;
+
+	export let location: NavigatorLocation<{programWasm?: ArrayBuffer | null, layout?: Layout | null}>;
+	export let navigate: NavigateFn;
 
 	let name: string = '';
 	let apiVersion: number = API_VERSION_LATEST;
-	let programWasm: ArrayBuffer | null = null;
+	let programWasm: ArrayBuffer | null = location.state?.programWasm || null;
 
 	let creating: boolean = false;
 	let bannerError: string | null = null;
 	let focusNameInput: () => void;
+	let layout: Layout | null = location.state?.layout || null;
 
 	async function handleCreate() {
 		if (programWasm === null) {
@@ -29,8 +35,9 @@
 		formData.append('wasm', new Blob([programWasm], {type: 'application/wasm'}));
 
 		creating = true;
+		let response: AxiosResponse;
 		try {
-			await axios.post('/api/programs', formData);
+			response = await axios.post('/api/programs', formData);
 		} catch (untypedErr) {
 			const err = untypedErr as AxiosError;
 			if (
@@ -47,7 +54,8 @@
 			return;
 		}
 
-		navigate('/');
+		const programBrief = Joi.attempt(response.data, programBriefSchema) as ProgramBrief;
+		navigate('/', {state: {programBrief, programWasm, layout}});
 	}
 </script>
 
@@ -84,6 +92,7 @@
 		bind:name
 		bind:apiVersion
 		bind:programWasm
+		bind:layout
 		bind:saving={creating}
 		bind:bannerError
 		bind:focusNameInput

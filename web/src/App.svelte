@@ -16,6 +16,6 @@
 		<Route path="/" component={DemoProgram}/>
 		<Route path="layouts/new" component={NewLayout}/>
 		<Route path="programs/new" component={NewProgram}/>
-		<Route path="programs/:id" component={ShowProgram}/>
+		<Route path="programs/:programId" component={ShowProgram}/>
 	</Router>
 </main>

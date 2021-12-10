@@ -1,12 +1,14 @@
 <script lang="ts">
 	import axios from 'axios';
 	import {Link} from 'svelte-navigator';
-	import type {ProgramBrief} from 'ledbetter-common';
+	import type {Layout, ProgramBrief} from 'ledbetter-common';
 	import type {Option} from './types';
 	import FancySelect from './FancySelect.svelte';
 	import {createEventDispatcher} from "svelte";
 
 	export let program: ProgramBrief | null;
+	export let programWasm: ArrayBuffer | null = null;
+	export let layout: Layout | null = null;
 
 	let selectedOption: Option | null;
 	let programs: ProgramBrief[] = [];
@@ -43,8 +45,20 @@
 	on:select={({detail}) => onSelect(detail)}
 >
 	{#if program}
-	<Link class="dropdown-item" to={`/programs/${program.id}`}>Show Details</Link>
+	<Link
+		class="dropdown-item"
+		to={`/programs/${program.id}`}
+		state={{layout}}
+	>
+		Show Details
+	</Link>
 	{/if}
-	<Link class="dropdown-item" to="/programs/new">Create new program</Link>
+	<Link
+		class="dropdown-item"
+		to="/programs/new"
+		state={{programWasm, layout}}
+	>
+		Create new program
+	</Link>
 	<hr class="dropdown-divider"/>
 </FancySelect>

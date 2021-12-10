@@ -1,13 +1,15 @@
 <script lang="ts">
-	import {useParams, Link, navigate} from 'svelte-navigator';
+	import {Link} from 'svelte-navigator';
+	import type {NavigatorLocation, NavigateFn} from 'svelte-navigator';
 	import axios, {AxiosError} from "axios";
-	import {program as programLib} from "ledbetter-common";
+	import {Layout, program as programLib} from "ledbetter-common";
 	import LoadingIcon from "./LoadingIcon.svelte";
 	import ProgramEdit from "./ProgramEdit.svelte";
 	const {API_VERSION_LATEST, validateWasmBinary} = programLib;
 
-	const params = useParams();
-	const programId = $params.id;
+	export let programId: string;
+	export let location: NavigatorLocation<{layout?: Layout | null}>;
+	export let navigate: NavigateFn;
 
 	let name: string = '';
 	let apiVersion: number = API_VERSION_LATEST;
@@ -16,6 +18,7 @@
 	let saving: boolean = false;
 	let bannerError: string | null = null;
 	let focusNameInput: () => void;
+	let layout: Layout | null = location.state?.layout || null;
 
 	async function loadProgram() {
 		const briefResponse = await axios.get(`/api/programs/${programId}`);
@@ -40,8 +43,10 @@
 			return;
 		}
 
+		const programBrief = {id: programId, name, apiVersion};
+
 		const formData = new FormData();
-		formData.append('body', JSON.stringify({id: programId, name, apiVersion}));
+		formData.append('body', JSON.stringify(programBrief));
 		formData.append('wasm', new Blob([programWasm], {type: 'application/wasm'}));
 
 		saving = true;
@@ -63,7 +68,7 @@
 			return;
 		}
 
-		navigate('/');
+		navigate('/', {state: {programBrief, programWasm, layout}});
 	}
 
 	async function handleDelete() {
@@ -118,6 +123,7 @@
 			bind:name
 			bind:apiVersion
 			bind:programWasm
+			bind:layout
 			bind:saving
 			bind:bannerError
 			bind:focusNameInput

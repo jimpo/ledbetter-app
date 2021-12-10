@@ -29,7 +29,7 @@
 
 	let wasmFileName: string | null = null;
 
-	let layout: Layout | null = null;
+	export let layout: Layout | null = null;
 	let pixelLayout: PixelLayout | null;
 
 	export function focusNameInput() {

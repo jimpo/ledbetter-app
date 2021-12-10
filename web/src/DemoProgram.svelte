@@ -2,8 +2,10 @@
 	import axios from 'axios';
 	import {
 		pixelLayout as layoutLib, Layout, PixelLayout, ProgramBrief, LEDDriver, DriverStatus,
+		program as programLib,
 	} from 'ledbetter-common';
 	import {useFocus} from 'svelte-navigator';
+	import type {NavigateFn, NavigatorLocation} from 'svelte-navigator';
 	import Animation from './Animation.svelte';
 	import LayoutSelect from './LayoutSelect.svelte';
 	import ProgramSelect from './ProgramSelect.svelte';
@@ -15,18 +17,49 @@
 	import {BrowserAnimationDriver, ExternalDriver} from "./driverControl";
 	import WasmDropZone from "./WasmDropZone.svelte";
 	import {tick} from "svelte";
-	import {encodeBase64} from "./util";
+	const {API_VERSION_LATEST, validateWasmBinary} = programLib;
 
 	const registerFocus = useFocus();
 
-	let layout: Layout | null = null;
+	export let location: NavigatorLocation<{
+		programBrief?: ProgramBrief | null,
+		programWasm?: ArrayBuffer | null,
+		layout?: Layout | null,
+	}>;
+	export let navigate: NavigateFn;
+
+	let programBrief: ProgramBrief | null = location.state?.programBrief || null;
+	let programWasm: ArrayBuffer | null = location.state?.programWasm || null;
+	let layout: Layout | null = location.state?.layout || null;
+
 	let driver: LEDDriver | null = null;
-	let programBrief: ProgramBrief | null = null;
 	let pixelLayout: PixelLayout | null;
 	let driverStatus: Writable<DriverStatus> = writable('NotPlaying');
 	let driverControl: DriverControl;
+	let bannerError: string | null;
 
-	let programWasm: ArrayBuffer | null = null;
+	async function handleWasmFile(file: File | undefined) {
+		bannerError = '';
+		if (!file) {
+			return;
+		}
+
+		if (file.type !== 'application/wasm') {
+			bannerError = 'File must be a WebAssembly binary';
+			return;
+		}
+		let wasm = await file.arrayBuffer();
+		try {
+			await validateWasmBinary(wasm, API_VERSION_LATEST);
+		} catch (err) {
+			if (err instanceof Error) {
+				bannerError = `Module is not valid: ${err.message}`;
+				return;
+			}
+			throw err;
+		}
+		await selectNewProgram(wasm);
+	}
 
 	async function selectNewProgram(wasm: ArrayBuffer | null) {
 		await driverControl.stop();
@@ -63,12 +96,19 @@
 </script>
 
 <div class="container">
+	{#if bannerError}
+		<div class="notification is-danger">
+			<button class="delete" on:click|preventDefault={() => bannerError = null}></button>
+			{bannerError}
+		</div>
+	{/if}
+
 	<div class="block">
 		<h1  use:registerFocus class="title">LEDBetter Lights</h1>
 	</div>
 
 	<div class="block">
-		<WasmDropZone on:wasmDrop={({detail: wasm}) => selectNewProgram(wasm)}>
+		<WasmDropZone on:wasmDrop={({detail: file}) => handleWasmFile(file)}>
 			<Animation
 				aspectRatio={1}
 				layout={pixelLayout}
@@ -91,6 +131,8 @@
 			<div class="column">
 				<ProgramSelect
 					bind:program={programBrief}
+					{layout}
+					{programWasm}
 					on:select={({detail: selected}) => fetchProgramWasm(selected)}
 				/>
 			</div>

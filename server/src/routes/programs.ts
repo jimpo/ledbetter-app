@@ -11,6 +11,9 @@ import * as programsMod from '../programs.js';
 import {getAttachedWasm, getAttachedWasmSourceMap} from "./common.js";
 import {isHttpError} from "http-errors";
 import {RouterContext} from "@koa/router";
+import {program as programLib} from 'ledbetter-common';
+import assert from 'assert';
+const {programBriefSchema} = programLib;
 
 
 export async function listPrograms(ctx: Koa.Context, next: Koa.Next): Promise<void> {
@@ -135,20 +138,16 @@ export async function putProgram(ctx: RouterContext, next: Koa.Next): Promise<vo
 		return await next();
 	}
 
-	const requestSchema = Joi.object({
-		id: Joi.string().uuid().required(),
-		name: Joi.string().required(),
-		apiVersion: Joi.number().required(),
-	});
-
-	const { value: body, error } = requestSchema.validate(ctx.request.body);
+	const { value: body, error } = programBriefSchema.validate(ctx.request.body);
 	if (error) {
 		ctx.status = 422;
 		ctx.body = error.details;
 		return await next();
 	}
 
-	const {id, name, apiVersion} = body as {id: string, name: string, apiVersion: number};
+	assert(body !== undefined, 'body is undefined iff error is not undefined');
+
+	const {id, name, apiVersion} = body;
 	if (id !== currentProgramBrief.id) {
 		ctx.status = 422;
 		ctx.body = {error: 'id cannot be changed'};

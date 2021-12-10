@@ -16,6 +16,7 @@
 	"@types/nearley": "^2.11.2",
 	"@types/deep-equal": "^1.0.1",
 	"deep-equal": "^2.0.5",
+	"joi": "^17.5.0",
 	"moo": "^0.5.1",
 	"nearley": "^2.20.1"
   },
