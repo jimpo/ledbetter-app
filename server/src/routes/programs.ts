@@ -5,8 +5,7 @@ import {randomUUID} from 'crypto';
 import Koa from 'koa';
 import Joi from "joi";
 
-import {CompilationResult, compile} from '../programCompiler.js';
-import {CompilationError, InvalidProgramSourcePathError, UniquenessError} from '../errors.js';
+import {UniquenessError} from '../errors.js';
 import * as programsMod from '../programs.js';
 import {getAttachedWasm, getAttachedWasmSourceMap} from "./common.js";
 import {isHttpError} from "http-errors";
@@ -209,40 +208,4 @@ export async function putProgram(ctx: RouterContext, next: Koa.Next): Promise<vo
 	ctx.status = 200;
 	ctx.body = {id, name, apiVersion};
 	await next();
-}
-
-
-export async function compileProgram(ctx: Koa.Context, next: Koa.Next): Promise<void> {
-	const requestSchema = Joi.object({
-		files: Joi.object().pattern(Joi.string(), Joi.string()).required(),
-	});
-
-	const { value: body, error } = requestSchema.validate(ctx.request.body);
-	if (error) {
-		ctx.status = 422;
-		ctx.body = error.details;
-		return await next();
-	}
-
-	let result: CompilationResult;
-	try {
-		result = await compile(body.files as {[filePath: string]: string});
-	} catch (err) {
-		if (err instanceof CompilationError) {
-			ctx.status = 422;
-			ctx.body = {error: err.stderr || err.message};
-			return await next();
-		} else if (err instanceof InvalidProgramSourcePathError) {
-			ctx.status = 422;
-			ctx.body = {error: err.message};
-			return await next();
-		}
-		throw err;
-	}
-	ctx.body = {
-		wasm: result.wasm.toString('base64'),
-		sourceMap: result.sourceMap,
-	};
-
-	return await next();
 }
