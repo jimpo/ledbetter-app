@@ -7,9 +7,9 @@
 	import {useFocus} from 'svelte-navigator';
 	import type {NavigatorLocation} from 'svelte-navigator';
 	import Animation from '../components/Animation.svelte';
+	import BLEDriverSelect from '../components/BLEDriverSelect.svelte';
 	import LayoutSelect from '../components/LayoutSelect.svelte';
 	import ProgramSelect from '../components/ProgramSelect.svelte';
-	import DriverSelect from '../components/DriverSelect.svelte';
 	import ControlButtons from "../components/ControlButtons.svelte";
 	import type {Writable} from "svelte/store";
 	import {writable} from "svelte/store";
@@ -26,13 +26,12 @@
 		programWasm?: ArrayBuffer | null,
 		layout?: Layout | null,
 	}>;
-	//export let navigate: NavigateFn;
 
 	let programBrief: ProgramBrief | null = location.state?.programBrief || null;
 	let programWasm: ArrayBuffer | null = location.state?.programWasm || null;
 	let layout: Layout | null = location.state?.layout || null;
 
-	let driver: LEDDriver | null = null;
+	let device: BluetoothDevice | null = null;
 	let pixelLayout: PixelLayout | null;
 	let driverStatus: Writable<DriverStatus> = writable('NotPlaying');
 	let driverControl: DriverControl;
@@ -84,11 +83,12 @@
 
 	$: pixelLayout = layout && layoutLib.parseCode(layout.sourceCode);
 	$: {
-		if (driver !== null) {
+		if (device !== null) {
 			const runPayload =
 				(programBrief && {programId: programBrief.id}) ||
 				(programWasm && {wasm: programWasm});
-			driverControl = new ExternalDriver(driver.id, runPayload, $driverStatus, driverStatus);
+			//driverControl = new ExternalDriver(driver.id, runPayload, $driverStatus, driverStatus);
+			driverControl = new BrowserAnimationDriver(layout, programWasm, driverStatus);
 		} else {
 			driverControl = new BrowserAnimationDriver(layout, programWasm, driverStatus);
 		}
@@ -120,10 +120,10 @@
 	<div class="block">
 		<div class="columns">
 			<div class="column">
-				<DriverSelect
-					bind:selected={driver}
-					on:select={({detail: selected}) => driverStatus.set(selected?.status || 'NotPlaying')}
-				/>
+				<BLEDriverSelect />
+<!--				bind:selected={driver}-->
+<!--				on:select={({detail: selected}) => driverStatus.set(selected?.status || 'NotPlaying')}-->
+<!--				/>-->
 			</div>
 			<div class="column">
 				<LayoutSelect bind:layout={layout} />
