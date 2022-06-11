@@ -10,13 +10,6 @@
 	let isActive: boolean = false;
 
 	const ECHO_SERVICE_UUID = '00000000-0000-0000-000f-eedc0de00002';
-	const ECHO_CHARACTERISTIC_UUID = '00000000-0000-0000-000f-00dc0de00002';
-
-	// function onSelect(option: Option | null) {
-	// 	const newSelected = (option.value && drivers.get(option.value)) || null;
-	// 	dispatch('select', newSelected);
-	// 	selected = newSelected;
-	// }
 
 	function onFocusOut(event: FocusEvent) {
 		const nowFocused = event.relatedTarget;
@@ -26,34 +19,15 @@
 	}
 
 	async function scanDrivers(): Promise<void> {
-		const newDevice = await navigator.bluetooth.requestDevice({
+		device = await navigator.bluetooth.requestDevice({
 			filters: [{services: [ECHO_SERVICE_UUID]}],
 		});
-		await newDevice.gatt.connect();
-		device = newDevice;
-		// try {
-		//
-		// } catch (err) {
-		// 	device = null;
-		// 	throw err;
-		// }
+		dispatch('select', device);
+	}
 
-		<!--const service = await gatt.getPrimaryService(ECHO_SERVICE_UUID);-->
-		<!--const characteristic = await service.getCharacteristic(ECHO_CHARACTERISTIC_UUID);-->
-
-		<!--let resolve = (_) => {};-->
-		<!--characteristic.oncharacteristicvaluechanged = (event) => {-->
-		<!--	console.log('received', event);-->
-		<!--	resolve(event);-->
-		<!--};-->
-		<!--await characteristic.startNotifications();-->
-		<!--for (let i = 0; i < 100; i++) {-->
-		<!--	const receivePromise = new Promise((resolve_) => resolve = resolve_);-->
-		<!--	const buffer = new ArrayBuffer(512);-->
-		// 	console.log('writing');
-		// 	await characteristic.writeValueWithoutResponse(buffer);
-		// 	await receivePromise;
-		// }
+	function selectBrowserDemo(): void {
+		device = null;
+		dispatch('select', null);
 	}
 </script>
 
@@ -88,6 +62,15 @@
 	</div>
 	<div class="dropdown-menu" role="menu">
 		<div class="dropdown-content">
+			{#if device !== null}
+				<a
+					class="dropdown-item"
+					href={'#'}
+					on:click|preventDefault={selectBrowserDemo}
+				>
+					Browser demo
+				</a>
+			{/if}
 			<a
 				class="dropdown-item"
 				href={'#'}

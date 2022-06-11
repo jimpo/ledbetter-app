@@ -1,9 +1,7 @@
 <script lang="ts">
-	import type {DriverStatus} from 'ledbetter-common';
 	import type {DriverControl} from "../driverControl";
 
-	export let status: DriverStatus;
-	export let driverControl: DriverControl;
+	export let driver: DriverControl;
 
 	let actionPending: boolean = false;
 
@@ -19,8 +17,8 @@
 <button
 	class="button is-success is-light"
 	class:is-loading={actionPending}
-	on:click|preventDefault={() => disableWhilePending(driverControl.play())}
-	disabled={status === 'Playing' || !driverControl.canPlay}
+	on:click|preventDefault={() => disableWhilePending(driver.play())}
+	disabled={driver.status === 'Playing' || !driver.canPlay}
 >
 	<span class="icon">
 		<i class="fas fa-play"></i>
@@ -30,8 +28,8 @@
 <button
 	class="button is-warning is-light"
 	class:is-loading={actionPending}
-	on:click|preventDefault={() => disableWhilePending(driverControl.pause())}
-	disabled={status !== 'Playing'}
+	on:click|preventDefault={() => disableWhilePending(driver.pause())}
+	disabled={driver.status !== 'Playing'}
 >
 	<span class="icon">
 		<i class="fas fa-pause"></i>
@@ -41,8 +39,8 @@
 <button
 	class="button is-danger is-light"
 	class:is-loading={actionPending}
-	on:click|preventDefault={() => disableWhilePending(driverControl.stop())}
-	disabled={status === 'NotPlaying'}
+	on:click|preventDefault={() => disableWhilePending(driver.stop())}
+	disabled={driver.status === 'NotPlaying'}
 >
 	<span class="icon">
 		<i class="fas fa-stop"></i>

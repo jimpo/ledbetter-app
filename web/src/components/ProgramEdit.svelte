@@ -5,13 +5,12 @@
 	import WasmDropZone from "./WasmDropZone.svelte";
 	import ErrorBanner from "./ErrorBanner.svelte";
 
-	import {BrowserAnimationDriver} from "../driverControl";
-	import type {DriverControl} from "../driverControl";
+	import {BrowserAnimationDriver, DriverControl} from "../driverControl";
+	import type {DeviceDriver} from "../driverControl";
 	import {useFocus} from "svelte-navigator";
 	import {DriverStatus, Layout, PixelLayout, pixelLayout as layoutLib, program as programLib} from "ledbetter-common";
 	import {writable} from 'svelte/store';
 	import type {Writable} from 'svelte/store';
-	import {tick} from "svelte";
 	const {API_VERSION_LATEST, validateWasmBinary} = programLib;
 
 	const registerFocus = useFocus();
@@ -25,8 +24,8 @@
 
 	let nameInput: HTMLInputElement;
 
-	let demoStatus: Writable<DriverStatus> = writable('NotPlaying');
-	let driverControl: DriverControl;
+	let driver: DeviceDriver;
+	let driverStatus: Writable<DriverStatus> = writable('NotPlaying');
 
 	let wasmFileName: string | null = null;
 
@@ -67,11 +66,11 @@
 	}
 
 	async function handleNewWasm(wasm: ArrayBuffer) {
-		await driverControl.stop();
+		await driver.stop();
 		programWasm = wasm;
-		// Wait for driverControl to update
-		await tick();
-		await driverControl.play();
+		if (driver.canPlay) {
+			await driver.play(programWasm);
+		}
 	}
 
 	async function handleWasmEvent(event: Event) {
@@ -84,7 +83,7 @@
 	}
 
 	$: pixelLayout = layout ? layoutLib.parseCode(layout.sourceCode) : null;
-	$: driverControl = new BrowserAnimationDriver(layout, programWasm, demoStatus);
+	$: driver = new BrowserAnimationDriver(layout, driverStatus);
 	$: {
 		if (!wasmFileName && programWasm) {
 			wasmFileName = 'main.wasm';
@@ -110,7 +109,7 @@
 
 <div class="block">
 	<WasmDropZone on:wasmDrop={({detail: wasmFile}) => handleWasmFile(wasmFile)}>
-		<Animation aspectRatio={1} layout={pixelLayout} {programWasm} status={$demoStatus} />
+		<Animation aspectRatio={1} layout={pixelLayout} {programWasm} status={$driverStatus} />
 	</WasmDropZone>
 </div>
 
@@ -138,6 +137,6 @@
 		</div>
 	</div>
 	<div class="column">
-		<ControlButtons status={$demoStatus} {driverControl} />
+		<ControlButtons driver={new DriverControl(driver, $driverStatus, programWasm)}/>
 	</div>
 </div>

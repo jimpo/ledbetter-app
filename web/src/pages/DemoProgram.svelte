@@ -13,10 +13,10 @@
 	import ControlButtons from "../components/ControlButtons.svelte";
 	import type {Writable} from "svelte/store";
 	import {writable} from "svelte/store";
-	import type {DriverControl} from "../driverControl";
-	import {BrowserAnimationDriver, ExternalDriver} from "../driverControl";
+	import type {DeviceDriver} from "../driverControl";
+	import {connectBluetoothDevice, DriverControl} from "../driverControl";
+	import {BluetoothDriver, BrowserAnimationDriver} from "../driverControl";
 	import WasmDropZone from "../components/WasmDropZone.svelte";
-	import {tick} from "svelte";
 	const {API_VERSION_LATEST, validateWasmBinary} = programLib;
 
 	const registerFocus = useFocus();
@@ -31,10 +31,11 @@
 	let programWasm: ArrayBuffer | null = location.state?.programWasm || null;
 	let layout: Layout | null = location.state?.layout || null;
 
-	let device: BluetoothDevice | null = null;
+	let selectedDevice: BluetoothDevice | null = null;
+
 	let pixelLayout: PixelLayout | null;
 	let driverStatus: Writable<DriverStatus> = writable('NotPlaying');
-	let driverControl: DriverControl;
+	let driver: DeviceDriver = new BrowserAnimationDriver(driverStatus, layout);
 	let bannerError: string | null;
 
 	async function handleWasmFile(file: File | undefined) {
@@ -61,11 +62,10 @@
 	}
 
 	async function selectNewProgram(wasm: ArrayBuffer | null) {
-		await driverControl.stop();
+		await driver.stop();
 		programWasm = wasm;
-		await tick(); // Wait for driverControl update
-		if (driverControl.canPlay) {
-			await driverControl.play();
+		if (driver.canPlay) {
+			await driver.play(wasm);
 		}
 	}
 
@@ -82,17 +82,19 @@
 	}
 
 	$: pixelLayout = layout && layoutLib.parseCode(layout.sourceCode);
-	$: {
-		if (device !== null) {
-			const runPayload =
-				(programBrief && {programId: programBrief.id}) ||
-				(programWasm && {wasm: programWasm});
-			//driverControl = new ExternalDriver(driver.id, runPayload, $driverStatus, driverStatus);
-			driverControl = new BrowserAnimationDriver(layout, programWasm, driverStatus);
+	$: (async () => {
+		if (selectedDevice === null) {
+			if (!(driver instanceof BrowserAnimationDriver && driver.layout === layout)) {
+				await driver.disconnect();
+				driver = new BrowserAnimationDriver(layout, driverStatus);
+			}
 		} else {
-			driverControl = new BrowserAnimationDriver(layout, programWasm, driverStatus);
+			if (!(driver instanceof BluetoothDriver && driver.device.id === selectedDevice.id)) {
+				await driver.disconnect();
+				driver = await connectBluetoothDevice(selectedDevice, driverStatus);
+			}
 		}
-	}
+	})();
 </script>
 
 <div class="container">
@@ -113,17 +115,16 @@
 				aspectRatio={1}
 				layout={pixelLayout}
 				{programWasm}
-				status={driver === null ? $driverStatus : 'NotPlaying'}
+				status={driver instanceof BrowserAnimationDriver ? $driverStatus : 'NotPlaying'}
 			/>
 		</WasmDropZone>
 	</div>
 	<div class="block">
 		<div class="columns">
 			<div class="column">
-				<BLEDriverSelect />
-<!--				bind:selected={driver}-->
-<!--				on:select={({detail: selected}) => driverStatus.set(selected?.status || 'NotPlaying')}-->
-<!--				/>-->
+				<BLEDriverSelect
+					bind:device={selectedDevice}
+				/>
 			</div>
 			<div class="column">
 				<LayoutSelect bind:layout={layout} />
@@ -137,7 +138,7 @@
 				/>
 			</div>
 			<div class="column">
-				<ControlButtons status={$driverStatus} {driverControl} />
+				<ControlButtons driver={new DriverControl(driver, $driverStatus, programWasm)}/>
 			</div>
 		</div>
 	</div>
