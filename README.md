@@ -30,22 +30,10 @@ $ npm run dev
 
 This will live-update the web frontend anytime the frontend code in `web/` changes.
 
-Next, run the web server development and test databases in a container.
+Next, change to the web server directory.
 
 ```bash
 $ cd server
-$ docker-compose up
-```
-
-Create the development database
-
-```bash
-$ docker-compose exec mysql mysql --user root --password
-Enter password: # The password is topsecret
-mysql> CREATE DATABASE ledbetter;
-Query OK, 1 row affected (0.04 sec)
-mysql> GRANT ALL PRIVILEGES ON ledbetter.* TO admin;
-Query OK, 0 rows affected (0.04 sec)
 ```
 
 Install all dependencies.
@@ -54,11 +42,17 @@ Install all dependencies.
 $ npm install
 ```
 
-Run migrations on the test and development databases.
+Run tests.
+
+```bash
+$ npm run check
+$ npm test
+```
+
+Run migrations on the development database.
 
 ```bash
 $ npm run migrate
-$ npm run migrate_test
 ```
 
 Finally, run the web server

@@ -4,20 +4,7 @@ services:
     build: .
     ports:
       - "8000:8000"
-    environment:
-      MYSQL_HOST: database
-      MYSQL_PORT: 3306
-      MYSQL_USER: "${MYSQL_USER:-admin}"
-      MYSQL_PASSWORD: "${MYSQL_PASSWORD:-admin}"
-      MYSQL_DATABASE: "${MYSQL_DATABASE:-ledbetter}"
-  database:
-    image: mysql:latest
-    environment:
-      MYSQL_USER: "${MYSQL_USER:-default}"
-      MYSQL_PASSWORD: "${MYSQL_PASSWORD:-default}"
-      MYSQL_DATABASE: "${MYSQL_DATABASE:-default}"
-      MYSQL_RANDOM_ROOT_PASSWORD: 1
     volumes:
-      - "database:/var/lib/mysql"
+      - "database:/home/somebody/data"
 volumes:
   database:

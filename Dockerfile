@@ -1,5 +1,7 @@
 FROM node:16-alpine
 
+RUN apk add -U sqlite
+
 RUN adduser -D somebody
 USER somebody
 
@@ -21,6 +23,10 @@ COPY --chown=somebody:somebody web web/
 RUN cd common && npm run check
 RUN cd server && npm run check
 RUN cd web && npm run build
+
+RUN mkdir data
+VOLUME data
+ENV SQLITE_DB_PATH=data/production.db
 
 ENV NODE_ENV=production PORT=8000
 
