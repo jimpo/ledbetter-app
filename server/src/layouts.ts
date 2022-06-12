@@ -1,6 +1,7 @@
+import {SqliteError} from 'better-sqlite3';
 import {Layout} from 'ledbetter-common';
 
-import {db} from './db.js';
+import {db, isUniquenessError} from './db.js';
 import {UniquenessError} from './errors.js';
 
 const LIST_LIMIT: number = 10;
@@ -49,12 +50,7 @@ export async function destroy(id: string): Promise<boolean> {
 }
 
 function checkUniquenessErrors(layout: Layout, err: any) {
-	if (err instanceof Object &&
-		err.hasOwnProperty('code') &&
-		err.hasOwnProperty('sqlMessage')) {
-		const {code, sqlMessage} = err as {code: string, sqlMessage: string};
-		if (code == 'ER_DUP_ENTRY' && sqlMessage.match(/layouts\.layouts_name_unique/)) {
-			throw new UniquenessError('name', `Layout already exists with name: ${layout.name}`);
-		}
+	if (isUniquenessError('layouts', 'name', err)) {
+		throw new UniquenessError('name', `Layout already exists with name: ${layout.name}`);
 	}
 }

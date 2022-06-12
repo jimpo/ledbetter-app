@@ -1,6 +1,6 @@
 import {ProgramBrief} from 'ledbetter-common';
 
-import {db} from './db.js';
+import {db, isUniquenessError} from './db.js';
 import {UniquenessError} from './errors.js';
 
 export interface Program {
@@ -81,12 +81,7 @@ export async function destroy(id: string): Promise<boolean> {
 }
 
 function checkUniquenessErrors(program: Program, err: any) {
-	if (err instanceof Object &&
-		err.hasOwnProperty('code') &&
-		err.hasOwnProperty('sqlMessage')) {
-		const {code, sqlMessage} = err as {code: string, sqlMessage: string};
-		if (code == 'ER_DUP_ENTRY' && sqlMessage.match(/programs\.programs_name_unique/)) {
-			throw new UniquenessError('name', `Program already exists with name: ${program.name}`);
-		}
+	if (isUniquenessError('programs', 'name', err)) {
+		throw new UniquenessError('name', `Program already exists with name: ${program.name}`);
 	}
 }

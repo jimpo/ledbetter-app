@@ -5,7 +5,10 @@ import {getConnectedDrivers} from './driverManager.js';
 
 const LIST_LIMIT: number = 10;
 
-
+// These are unused but they're better tested than the other DB model files, so
+// I don't want to delete them yet.
+//
+// TODO: Port the tests and clean this up
 export async function create(driver: LEDDriver): Promise<void> {
     return await db('ledDrivers').insert(driver);
 }

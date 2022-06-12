@@ -1,17 +1,22 @@
 import knex, {Knex} from 'knex';
+import {SqliteError} from "better-sqlite3";
 
-const DEFAULT_MYSQL_PORT = 3306;
+let sqliteFilename = undefined;
+if (process.env.NODE_ENV === 'test') {
+	sqliteFilename = ':memory:';
+} else if (typeof process.env.SQLITE_DB_PATH !== 'undefined') {
+	sqliteFilename = process.env.SQLITE_DB_PATH;
+}
+
+if (!sqliteFilename) {
+	throw Error("Environment variable SQLITE_DB_PATH is not set");
+}
 
 const db = knex({
-	client: 'mysql2',
+	client: 'better-sqlite3',
 	connection: {
-		host: process.env.MYSQL_HOST,
-		port: process.env.MYSQL_PORT ? Number.parseInt(process.env.MYSQL_PORT) : DEFAULT_MYSQL_PORT,
-		user: process.env.MYSQL_USER,
-		password: process.env.MYSQL_PASSWORD,
-		database: process.env.MYSQL_DATABASE,
+		filename: sqliteFilename,
 	},
-	pool: { min: 2, max: 10 },
 });
 let exportDB = db;
 
@@ -42,4 +47,27 @@ export async function rollbackGlobalTransaction(error?: any): Promise<void> {
 	exportDB = db;
 }
 
-export { exportDB as db, beginGlobalTransaction };
+function isMySQL2UniquenessError(table: string, column: string, err: any): boolean {
+	if (err instanceof Object &&
+		err.hasOwnProperty('code') &&
+		err.hasOwnProperty('sqlMessage')) {
+		const {code, sqlMessage} = err as { code: string, sqlMessage: string };
+		const errorPattern = new RegExp(`${table}\.${table}_${column}_unique`);
+		return code == 'ER_DUP_ENTRY' && !!sqlMessage.match(errorPattern);
+	}
+	return false;
+}
+
+function isBetterSqlite3UniqunessError(table: string, column: string, err: any): boolean {
+	if (err instanceof SqliteError) {
+		const errorPattern = new RegExp(`UNIQUE constraint failed: ${table}\.${column}`);
+		return err.code === 'SQLITE_CONSTRAINT_UNIQUE' && !!err.message.match(errorPattern);
+	}
+	return false;
+}
+
+export {
+	exportDB as db,
+	beginGlobalTransaction,
+	isBetterSqlite3UniqunessError as isUniquenessError,
+};

@@ -1,16 +1,26 @@
-const DEFAULT_MYSQL_PORT = 3306;
+let test = undefined;
+let development = undefined;
+let production = undefined;
 
-const mySqlEnvConfig = {
-  client: 'mysql2',
+const sqliteMemoryConfig = {
+  client: 'better-sqlite3',
   connection: {
-    host: process.env.MYSQL_HOST,
-    port: process.env.MYSQL_PORT ? Number.parseInt(process.env.MYSQL_PORT) : DEFAULT_MYSQL_PORT,
-    user: process.env.MYSQL_USER,
-    password: process.env.MYSQL_PASSWORD,
-    database: process.env.MYSQL_DATABASE,
+		filename: ':memory:',
   },
 };
 
-export const development = mySqlEnvConfig;
-export const production = mySqlEnvConfig;
-export const test = mySqlEnvConfig;
+test = sqliteMemoryConfig;
+
+if (typeof process.env.SQLITE_DB_PATH !== 'undefined') {
+	const sqliteEnvConfig = {
+		client: 'better-sqlite3',
+		connection: {
+			filename: process.env.SQLITE_DB_PATH,
+		},
+	};
+
+	development = sqliteEnvConfig;
+	production = sqliteEnvConfig;
+}
+
+export {test, development, production};
