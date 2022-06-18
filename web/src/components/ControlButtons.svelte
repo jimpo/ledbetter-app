@@ -6,6 +6,7 @@
 	let actionPending: boolean = false;
 
 	async function disableWhilePending(promise: Promise<void>) {
+		actionPending = true;
 		try {
 			await promise;
 		} finally {

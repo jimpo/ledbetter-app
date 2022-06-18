@@ -5,5 +5,5 @@ export interface LEDDriver {
 	status?: DriverStatus,
 }
 
-export type DriverStatus = 'NotPlaying' | 'Playing' | 'Paused';
+export type DriverStatus = 'NotPlaying' | 'Playing' | 'Paused' | 'Transfer';
 

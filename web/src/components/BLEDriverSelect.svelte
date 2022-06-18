@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {createEventDispatcher} from "svelte";
+	import {LEDBETTER_SERVICE_UUID} from "../driverControl";
 
 	const dispatch = createEventDispatcher();
 
@@ -8,8 +9,6 @@
 	let defaultLabel: string = 'Browser demo';
 	let dropdownElement: HTMLDivElement;
 	let isActive: boolean = false;
-
-	const ECHO_SERVICE_UUID = '00000000-0000-0000-000f-eedc0de00002';
 
 	function onFocusOut(event: FocusEvent) {
 		const nowFocused = event.relatedTarget;
@@ -20,7 +19,7 @@
 
 	async function scanDrivers(): Promise<void> {
 		device = await navigator.bluetooth.requestDevice({
-			filters: [{services: [ECHO_SERVICE_UUID]}],
+			filters: [{services: [LEDBETTER_SERVICE_UUID]}],
 		});
 		dispatch('select', device);
 	}
