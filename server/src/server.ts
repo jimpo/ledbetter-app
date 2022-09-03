@@ -1,3 +1,5 @@
+import util from 'util';
+
 import {WebSocketServer} from 'ws';
 
 import app from './app.js';
@@ -8,3 +10,11 @@ const httpServer = app.listen(port);
 const wsServer = new WebSocketServer({server: httpServer});
 wsServer.on('connection', handleConnection);
 console.log(`Listening on port ${port}`);
+
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
+
+async function shutdown(signal: string) {
+	console.log(`Received ${signal}, shutting down`);
+	await util.promisify(httpServer.close.bind(httpServer))();
+}

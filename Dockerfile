@@ -26,7 +26,7 @@ RUN cd web && npm run build
 
 RUN mkdir data
 VOLUME data
-ENV SQLITE_DB_PATH=data/production.db
+ENV SQLITE_DB_PATH=/home/somebody/data/production.db
 
 ENV NODE_ENV=production PORT=8000
 
