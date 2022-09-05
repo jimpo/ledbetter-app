@@ -26,6 +26,7 @@
 		"koa-compose": "^4.1.0",
 		"koa-send": "^5.0.1",
 		"ledbetter-common": "file:../common",
+		"serverless-http": "^3.0.2",
 		"tempy": "^2.0.0",
 		"ws": "^8.2.3"
 	},
