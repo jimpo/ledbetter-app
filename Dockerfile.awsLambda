@@ -1,0 +1,49 @@
+FROM public.ecr.aws/lambda/nodejs:16 AS builder
+
+RUN mkdir /build && \
+    cd /build && \
+    mkdir common server web
+
+WORKDIR /build
+
+COPY common/package.json common/package-lock.json common/
+COPY server/package.json server/package-lock.json server/
+COPY web/package.json web/package-lock.json web/
+
+RUN cd common && npm install
+RUN cd server && npm install
+RUN cd web && npm install
+
+COPY common/ common/
+COPY server/ server/
+COPY web/ web/
+
+RUN cd common && npm run check
+RUN cd server && npm run check
+RUN cd web && npm run build
+
+FROM public.ecr.aws/lambda/nodejs:16
+
+RUN yum install -y sqlite-devel.x86_64
+
+RUN mkdir public dist node_modules common common/dist common/node_modules
+
+COPY --from=builder /build/web/public/ public/
+COPY --from=builder /build/common/package.json /build/common/package-lock.json common/
+COPY --from=builder /build/common/dist/ common/dist/
+COPY --from=builder /build/common/node_modules/ common/node_modules/
+COPY --from=builder /build/server/package.json /build/server/package-lock.json /build/server/knexfile.js ./
+COPY --from=builder /build/server/dist/ dist/
+COPY --from=builder /build/server/node_modules/ node_modules/
+
+RUN cd common && \
+    npm link && \
+    cd .. && \
+    npm link ledbetter-common
+
+RUN mkdir data
+VOLUME /var/task/data
+ENV SQLITE_DB_PATH=/var/task/data/production.db
+
+ENV NODE_ENV=production
+CMD ["dist/src/awsLambda.handler"]
