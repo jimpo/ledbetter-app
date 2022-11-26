@@ -36,6 +36,7 @@ export async function getProgramWasm(ctx: Koa.Context, next: Koa.Next): Promise<
 	const wasm = await programsMod.getWasm(ctx.params.id);
 	if (wasm) {
 		ctx.body = wasm;
+		ctx.set('content-type', 'application/wasm');
 	}
 	await next();
 }
