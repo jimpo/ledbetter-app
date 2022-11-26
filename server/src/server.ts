@@ -3,6 +3,7 @@ import util from 'util';
 import {WebSocketServer} from 'ws';
 
 import app from './app.js';
+import {db} from './db.js';
 import {handleConnection} from './driverManager.js';
 
 const port = process.env.PORT || 3000;
@@ -17,4 +18,5 @@ process.on('SIGTERM', shutdown);
 async function shutdown(signal: string) {
 	console.log(`Received ${signal}, shutting down`);
 	await util.promisify(httpServer.close.bind(httpServer))();
+	await db.destroy();
 }
